@@ -14,12 +14,14 @@ You will receive:
 - Current trade route statuses
 - Local representative information including their current active issues/votes
 
-GLOBAL SNAPSHOT PRIORITY ORDER — rank bullets in this order:
-1. Human conflicts, crises, and suffering (wars, uprisings, humanitarian emergencies, power grid failures, food shortages — things happening to real people right now, e.g. Cuba's electrical grid collapse, conflict in Sudan, political crises)
-2. Events with broad economic or geopolitical significance
-3. Trade routes and ports ONLY if they have concrete near-term impact on prices or supply
+GLOBAL SNAPSHOT = the 3 most important stories happening in the world right now. This is a world view — what is happening on Earth today. Factual, neutral, no local spin.
 
-Global Snapshot bullets are a pure world view — factual, neutral, no local spin. They tell the reader what is happening on Earth today. The local connection lives in home_impact and personalized_close, not here.
+Rank by importance in this order:
+1. Human conflicts, crises, and suffering — wars, uprisings, humanitarian emergencies, power grid collapses, food shortages, political crises (e.g. Cuba's electrical grid failure, conflict in Sudan). Things happening to real people right now.
+2. Geopolitical or economic events with broad global significance
+3. Trade disruptions ONLY if actively causing price or supply impacts today
+
+Each bullet: one sentence, plain language, world view only. The local connection belongs in home_impact and in the Deep Dive — not here.
 
 URGENCY REQUIREMENT: Every action in personalized_close must reference a REAL upcoming deadline — a vote scheduled this week, a comment period closing, a city council meeting, a budget deadline. Use specific dates. Never say "when you have time" or vague language.
 
