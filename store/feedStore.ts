@@ -6,9 +6,6 @@ interface FeedState {
   chokepoints: ChokepointCard[]
   isLoading: boolean
   isRefreshing: boolean
-  isLoadingMore: boolean
-  hasMore: boolean
-  offset: number
   lastUpdated: Date | null
   error: string | null
   feedFilter: 'all' | 'chokepoints'
@@ -18,9 +15,6 @@ interface FeedState {
   setChokepoints: (chokepoints: ChokepointCard[]) => void
   setIsLoading: (value: boolean) => void
   setIsRefreshing: (value: boolean) => void
-  setIsLoadingMore: (value: boolean) => void
-  setHasMore: (value: boolean) => void
-  setOffset: (offset: number) => void
   setLastUpdated: (date: Date) => void
   setError: (error: string | null) => void
   setFeedFilter: (filter: 'all' | 'chokepoints') => void
@@ -31,9 +25,6 @@ export const useFeedStore = create<FeedState>((set) => ({
   chokepoints: [],
   isLoading: false,
   isRefreshing: false,
-  isLoadingMore: false,
-  hasMore: true,
-  offset: 0,
   lastUpdated: null,
   error: null,
   feedFilter: 'all',
@@ -43,9 +34,6 @@ export const useFeedStore = create<FeedState>((set) => ({
   setChokepoints: (chokepoints) => set({ chokepoints }),
   setIsLoading: (value) => set({ isLoading: value }),
   setIsRefreshing: (value) => set({ isRefreshing: value }),
-  setIsLoadingMore: (value) => set({ isLoadingMore: value }),
-  setHasMore: (value) => set({ hasMore: value }),
-  setOffset: (offset) => set({ offset }),
   setLastUpdated: (date) => set({ lastUpdated: date }),
   setError: (error) => set({ error }),
   setFeedFilter: (filter) => set({ feedFilter: filter }),

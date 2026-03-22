@@ -31,13 +31,13 @@ export async function generateSignals(): Promise<SignalCard[]> {
  * Fetches the latest stored signals from Supabase.
  * Used by the Signal feed screen.
  */
-export async function fetchLatestSignals(limit = 20, offset = 0): Promise<SignalCard[]> {
+export async function fetchLatestSignals(limit = 20): Promise<SignalCard[]> {
   try {
     const { data, error } = await supabase
       .from('signals')
       .select('*')
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+      .limit(limit)
 
     if (error) throw error
     return deduplicateByTags(data || [])

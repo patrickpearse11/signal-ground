@@ -71,6 +71,14 @@ export function NewsCard({ signal, onSaveToImpact }: Props) {
         </View>
       )}
 
+      {/* Sources */}
+      {signal.sources && signal.sources.length > 0 && (
+        <View style={styles.sourcesRow}>
+          <Text style={styles.sourcesLabel}>Sources: </Text>
+          <Text style={styles.sourcesText}>{signal.sources.join(' · ')}</Text>
+        </View>
+      )}
+
       {/* Divider */}
       <View style={styles.divider} />
 
@@ -181,6 +189,21 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 11,
     color: colors.text.secondary,
+  },
+  sourcesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: spacing.sm,
+  },
+  sourcesLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.text.secondary,
+  },
+  sourcesText: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    flex: 1,
   },
   divider: {
     height: 0.5,

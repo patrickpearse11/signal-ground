@@ -29,7 +29,8 @@ Find 5 distinct stories from different regions. For each story, output a JSON ob
   "local_impact": "one sentence on how this could affect Tarzana/Los Angeles residents (economy, prices, traffic, safety, jobs)",
   "tags": ["array", "of", "2-4", "topic", "tags"],
   "escalation_level": 1 | 2 | 3 | 4 | 5,
-  "source_region": "region name e.g. Middle East, East Asia, Europe, South Asia, Latin America, North America, Africa"
+  "source_region": "region name e.g. Middle East, East Asia, Europe, South Asia, Latin America, North America, Africa",
+  "sources": ["Publication or outlet name", "e.g. Reuters, BBC, Al Jazeera, Financial Times"]
 }
 
 Output a strict JSON array of exactly 5 objects. No preamble, no markdown, no explanation. Just the raw JSON array.`
@@ -205,6 +206,7 @@ serve(async (req) => {
           tags: cardTags,
           escalation_level: card.escalation_level || 1,
           source_region: card.source_region || 'Global',
+          sources: card.sources || [],
         })
         .select()
         .single()

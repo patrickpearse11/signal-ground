@@ -9,6 +9,7 @@ export interface SignalCard {
   tags: string[]
   escalation_level: 1 | 2 | 3 | 4 | 5
   source_region?: string
+  sources?: string[]
   created_at?: string
 }
 

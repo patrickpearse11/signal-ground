@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useMemo, useState } from 'react'
 import {
-  View, Text, FlatList, RefreshControl, ActivityIndicator,
+  View, Text, FlatList, RefreshControl,
   StyleSheet, TouchableOpacity
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -14,15 +14,13 @@ import { fetchLatestSignals, generateSignals, fetchChokepoints } from '@/service
 import { colors, spacing } from '@/constants/theme'
 import { FeedItem, SignalCard } from '@/types/signal'
 
-const PAGE_SIZE = 20
 const REFRESH_COOLDOWN_MS = 15 * 60 * 1000
 
 export default function SignalScreen() {
   const {
-    signals, chokepoints, isLoading, isRefreshing, isLoadingMore, hasMore, offset,
+    signals, chokepoints, isLoading, isRefreshing,
     lastUpdated, error, feedFilter,
-    setSignals, appendSignals, setChokepoints,
-    setIsLoading, setIsRefreshing, setIsLoadingMore, setHasMore, setOffset,
+    setSignals, setChokepoints, setIsLoading, setIsRefreshing,
     setLastUpdated, setError, setFeedFilter,
   } = useFeedStore()
   const [toast, setToast] = useState({ visible: false, message: '' })
@@ -34,13 +32,11 @@ export default function SignalScreen() {
 
     try {
       const [cached, chokepointData] = await Promise.all([
-        fetchLatestSignals(PAGE_SIZE, 0),
+        fetchLatestSignals(20),
         fetchChokepoints(),
       ])
 
-      setSignals(cached)
-      setOffset(cached.length)
-      setHasMore(cached.length === PAGE_SIZE)
+      if (cached.length > 0) setSignals(cached)
       if (chokepointData.length > 0) setChokepoints(chokepointData)
       setLastUpdated(new Date())
 
@@ -48,10 +44,8 @@ export default function SignalScreen() {
       if ((refresh && cooldownPassed) || cached.length === 0) {
         const fresh = await generateSignals()
         if (fresh.length > 0) {
-          const updated = await fetchLatestSignals(PAGE_SIZE, 0)
+          const updated = await fetchLatestSignals(20)
           setSignals(updated)
-          setOffset(updated.length)
-          setHasMore(updated.length === PAGE_SIZE)
           setLastUpdated(new Date())
         }
       }
@@ -62,25 +56,6 @@ export default function SignalScreen() {
       setIsRefreshing(false)
     }
   }, [lastUpdated])
-
-  const loadMore = useCallback(async () => {
-    if (isLoadingMore || !hasMore || feedFilter === 'chokepoints') return
-    setIsLoadingMore(true)
-    try {
-      const more = await fetchLatestSignals(PAGE_SIZE, offset)
-      if (more.length === 0) {
-        setHasMore(false)
-      } else {
-        appendSignals(more)
-        setOffset(offset + more.length)
-        setHasMore(more.length === PAGE_SIZE)
-      }
-    } catch {
-      // silently fail — user can scroll back to trigger again
-    } finally {
-      setIsLoadingMore(false)
-    }
-  }, [isLoadingMore, hasMore, offset, feedFilter])
 
   useEffect(() => { loadFeed() }, [])
 
@@ -158,13 +133,6 @@ export default function SignalScreen() {
             <FeedFilterToggle value={feedFilter} onChange={setFeedFilter} />
           </View>
         }
-        ListFooterComponent={
-          isLoadingMore ? (
-            <View style={styles.loadingMore}>
-              <ActivityIndicator size="small" color={colors.text.accent} />
-            </View>
-          ) : null
-        }
         ListEmptyComponent={
           <View style={styles.centerState}>
             <Text style={styles.emptyText}>
@@ -173,8 +141,6 @@ export default function SignalScreen() {
             <Text style={styles.emptySubText}>Pull down to refresh</Text>
           </View>
         }
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.4}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
@@ -206,10 +172,6 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 28, fontWeight: '700', color: colors.text.primary },
   headerSub: { fontSize: 13, color: colors.text.secondary, marginTop: 2 },
   listContent: { paddingBottom: spacing.xl },
-  loadingMore: {
-    paddingVertical: spacing.lg,
-    alignItems: 'center',
-  },
   centerState: {
     alignItems: 'center',
     justifyContent: 'center',
