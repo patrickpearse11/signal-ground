@@ -10,17 +10,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SYSTEM_PROMPT = `You generate individual global news articles for a civic intelligence feed. Each card is one story — a real news article summary with clear sourcing and a direct connection to life in Tarzana, Los Angeles.
+const SYSTEM_PROMPT = `You generate individual global news articles for a civic intelligence feed. Each card is one story — what matters most in the world right now.
+
+Cover the most important stories happening globally. Wars, conflicts, political crises, humanitarian emergencies, elections, protests, government collapses, natural disasters, and major human events come first. Economic and trade stories only if they are among the top stories of the day.
 
 For each story:
 - "neutral_title": a clear, plain-language headline (max 12 words)
-- "summary_paragraph": 2-3 sentences summarizing what happened, who is involved, and why it matters. Write like a journalist — specific, factual, human. Name places, leaders, numbers where known.
-- "perspectives": "balanced" | "consensus" | "divergent" — how much do sources agree?
-- "local_impact": one specific sentence on how this story directly affects people in Tarzana or Los Angeles — groceries, gas, jobs at the port, family in affected countries, air quality, housing costs, safety
+- "summary_paragraph": 2-3 sentences. Write like a journalist — specific, factual, human. Name places, leaders, numbers where known. What happened, who is involved, why it matters.
+- "perspectives": "balanced" | "consensus" | "divergent"
+- "local_impact": one sentence on how this story directly touches people in Tarzana or Los Angeles — family in affected countries, gas prices, jobs, safety, immigration, community impact
 - "tags": 2-4 topic tags
 - "escalation_level": 1 (low) to 5 (critical)
-- "source_region": the region where this story originates
-- "sources": 1-3 real news outlets that have covered this story (e.g. Reuters, BBC, AP, Al Jazeera, Financial Times, NYT, WSJ)
+- "source_region": region where the story originates
+- "sources": 1-3 real outlets covering this story (Reuters, AP, BBC, Al Jazeera, NYT, WSJ, Financial Times, etc.)
 
 Output a strict JSON array of exactly 8 objects. No preamble, no markdown. Just the raw JSON array.`
 
