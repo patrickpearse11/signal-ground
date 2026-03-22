@@ -202,6 +202,9 @@ LOCAL REPRESENTATIVES FOR ZIP ${zip}:
 ${DEFAULT_REPS.map(r => `• ${r.name}, ${r.role} | ${r.phone} | ${r.email} — known issue: ${r.issue}`).join('\n')}
 
 Generate the complete daily brief JSON for a Tarzana resident at zip ${zip}.
+
+CRITICAL: For global_snapshot, use YOUR OWN KNOWLEDGE of what is happening in the world today — do not limit yourself to the signals list above. The signals list is for signal_teasers only. If there is an active war, military strike, invasion, or major armed conflict happening right now (e.g. Iran, Middle East, Ukraine, Gaza, etc.), it MUST appear as the first bullet. Active wars are always the most important story. Never omit an ongoing armed conflict from the snapshot.
+
 For signal_teasers, use the actual signal IDs provided above.
 For rep_actions, use the representatives listed above but ENRICH each rep's "issue" field with what you know about their CURRENT votes, hearings, or actions THIS WEEK (${today}). Be specific — name the bill, budget item, or council motion if you know it.
 For personalized_close.deadline, give a REAL upcoming deadline this week. Be specific with the date.
