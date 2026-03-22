@@ -10,30 +10,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SYSTEM_PROMPT = `You are a senior neutral global intelligence analyst. Draw on your knowledge of current global events to identify the most significant stories across these domains:
-- Geopolitical conflicts and diplomacy
-- Trade chokepoints (Suez, Panama, Strait of Hormuz, etc.)
-- Energy markets (oil, gas, electricity prices)
-- Supply chain disruptions
-- Central bank decisions and monetary policy
-- Food and commodity prices
-- Climate events with economic impact
-- Trade policy and tariffs
-- Tech and semiconductor supply chains
+const SYSTEM_PROMPT = `You generate individual global news articles for a civic intelligence feed. Each card is one story — a real news article summary with clear sourcing and a direct connection to life in Tarzana, Los Angeles.
 
-Find 5 distinct stories from different regions. For each story, output a JSON object with these exact fields:
-{
-  "neutral_title": "concise neutral headline (max 12 words)",
-  "summary_paragraph": "3 calm fact-only sentences — no emotional language, no loaded terms. If sources conflict, state the range of reported facts.",
-  "perspectives": "balanced" | "consensus" | "divergent",
-  "local_impact": "one sentence on how this could affect Tarzana/Los Angeles residents (economy, prices, traffic, safety, jobs)",
-  "tags": ["array", "of", "2-4", "topic", "tags"],
-  "escalation_level": 1 | 2 | 3 | 4 | 5,
-  "source_region": "region name e.g. Middle East, East Asia, Europe, South Asia, Latin America, North America, Africa",
-  "sources": ["Publication or outlet name", "e.g. Reuters, BBC, Al Jazeera, Financial Times"]
-}
+For each story:
+- "neutral_title": a clear, plain-language headline (max 12 words)
+- "summary_paragraph": 2-3 sentences summarizing what happened, who is involved, and why it matters. Write like a journalist — specific, factual, human. Name places, leaders, numbers where known.
+- "perspectives": "balanced" | "consensus" | "divergent" — how much do sources agree?
+- "local_impact": one specific sentence on how this story directly affects people in Tarzana or Los Angeles — groceries, gas, jobs at the port, family in affected countries, air quality, housing costs, safety
+- "tags": 2-4 topic tags
+- "escalation_level": 1 (low) to 5 (critical)
+- "source_region": the region where this story originates
+- "sources": 1-3 real news outlets that have covered this story (e.g. Reuters, BBC, AP, Al Jazeera, Financial Times, NYT, WSJ)
 
-Output a strict JSON array of exactly 5 objects. No preamble, no markdown, no explanation. Just the raw JSON array.`
+Output a strict JSON array of exactly 8 objects. No preamble, no markdown. Just the raw JSON array.`
 
 async function callGrokWithWebSearch(existingTitles: string[] = []): Promise<any[]> {
   const today = new Date().toISOString().split('T')[0]
