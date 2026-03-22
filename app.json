@@ -1,9 +1,10 @@
 {
   "expo": {
-    "name": "signal-ground",
+    "name": "Signal + Ground",
     "slug": "signal-ground",
     "version": "1.0.0",
     "orientation": "portrait",
+    "scheme": "signal-ground",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
@@ -25,6 +26,10 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ]
   }
 }
