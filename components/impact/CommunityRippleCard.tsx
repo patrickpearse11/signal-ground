@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, Platform } from 'react-native'
+import { View, Text, StyleSheet } from 'react-native'
 import { CommunityRipple } from '@/types/impact'
-import { colors, spacing, radius } from '@/constants/theme'
+import { colors, spacing, radius, fonts } from '@/constants/theme'
 
 interface Props {
   ripple: CommunityRipple
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 24,
     marginBottom: spacing.md,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: fonts.editorial,
   },
   grid: {
     flexDirection: 'row',

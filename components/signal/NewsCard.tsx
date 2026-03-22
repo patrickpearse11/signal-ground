@@ -2,9 +2,10 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { SignalCard } from '@/types/signal'
 import { EscalationBadge } from '@/components/shared/EscalationBadge'
 import { PerspectivesBadge } from '@/components/shared/PerspectivesBadge'
-import { colors, spacing, radius } from '@/constants/theme'
+import { colors, spacing, radius, fonts } from '@/constants/theme'
 import { supabase } from '@/services/supabaseClient'
 import { useUserStore } from '@/store/userStore'
+import { successTap } from '@/utils/haptics'
 
 interface Props {
   signal: SignalCard
@@ -16,6 +17,7 @@ export function NewsCard({ signal, onSaveToImpact }: Props) {
 
   async function handleSaveToImpact() {
     if (!userId || !signal.id) return
+    successTap()
     try {
       await supabase.from('impact_actions').insert({
         user_id: userId,
@@ -103,7 +105,7 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     lineHeight: 24,
     marginBottom: spacing.sm,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontFamily: fonts.editorial,
   },
   summary: {
     fontSize: 14,

@@ -4,6 +4,7 @@ import { ActionOpportunity } from '@/types/impact'
 import { supabase } from '@/services/supabaseClient'
 import { useUserStore } from '@/store/userStore'
 import { colors, spacing, radius } from '@/constants/theme'
+import { successTap } from '@/utils/haptics'
 
 interface Props {
   opportunity: ActionOpportunity
@@ -24,6 +25,7 @@ export function ActionCard({ opportunity, onRSVP }: Props) {
 
   async function handleAction() {
     if (!userId) return
+    successTap()
     try {
       await supabase.from('impact_actions').insert({
         user_id: userId,

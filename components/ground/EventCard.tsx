@@ -3,6 +3,7 @@ import { CivicEvent } from '@/types/ground'
 import { supabase } from '@/services/supabaseClient'
 import { useUserStore } from '@/store/userStore'
 import { colors, spacing, radius } from '@/constants/theme'
+import { successTap } from '@/utils/haptics'
 
 interface Props {
   event: CivicEvent
@@ -29,6 +30,7 @@ export function EventCard({ event, onRSVP }: Props) {
 
   async function handleRSVP() {
     if (!userId) return
+    successTap()
     try {
       await supabase.from('impact_actions').insert({
         user_id: userId,

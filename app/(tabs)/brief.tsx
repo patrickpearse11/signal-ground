@@ -1,50 +1,175 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { useEffect, useCallback } from 'react'
+import {
+  View, Text, ScrollView, RefreshControl,
+  StyleSheet, TouchableOpacity, ActivityIndicator
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useState } from 'react'
-import { colors, spacing } from '@/constants/theme'
+import { GlobalSnapshotCard } from '@/components/brief/GlobalSnapshotCard'
+import { HomeImpactCard } from '@/components/brief/HomeImpactCard'
+import { SignalsTeaserCard } from '@/components/brief/SignalsTeaserCard'
+import { RepQuickActionCard } from '@/components/brief/RepQuickActionCard'
+import { PersonalizedCloseCard } from '@/components/brief/PersonalizedCloseCard'
+import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { useBriefStore } from '@/store/briefStore'
 import { useUserStore } from '@/store/userStore'
-import { fetchCivicHeadlines } from '@/services/newsService'
-import { generateSignals, fetchLatestSignals } from '@/services/grokService'
+import { fetchTodaysBrief, fetchCachedBrief } from '@/services/briefService'
+import { colors, spacing } from '@/constants/theme'
 
 export default function BriefScreen() {
-  const { zip } = useUserStore()
-  const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<string>('')
+  const { brief, isLoading, error, setBrief, setIsLoading, setError } = useBriefStore()
+  const { userId, zip } = useUserStore()
 
-  async function testPipeline() {
-    setLoading(true)
-    setResult('Fetching headlines...')
-    const headlines = await fetchCivicHeadlines()
-    setResult(`Got ${headlines.length} headlines. Sending to Grok...`)
-    const signals = await generateSignals(headlines.slice(0, 2))
-    setResult(`Done. ${signals.length} signals generated.\n\n"${signals[0]?.neutral_title}"`)
-    setLoading(false)
+  const loadBrief = useCallback(async (refresh = false) => {
+    if (!userId) return
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      if (!refresh) {
+        const cached = await fetchCachedBrief(userId)
+        if (cached) {
+          setBrief(cached)
+          setIsLoading(false)
+          return
+        }
+      }
+
+      const fresh = await fetchTodaysBrief(userId, zip)
+      if (fresh) setBrief(fresh)
+      else setError('Could not load your brief. Pull down to retry.')
+
+    } catch (err) {
+      setError('Could not load your brief. Pull down to retry.')
+      console.warn('Brief load error:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [userId, zip])
+
+  useEffect(() => {
+    loadBrief()
+  }, [userId])
+
+  const content = brief?.content_json
+
+  const dateLabel = brief?.date
+    ? new Date(brief.date + 'T12:00:00').toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric'
+      })
+    : new Date().toLocaleDateString('en-US', {
+        weekday: 'long', month: 'long', day: 'numeric'
+      })
+
+  if (isLoading && !content) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Brief</Text>
+          <Text style={styles.headerDate}>{dateLabel}</Text>
+        </View>
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="small" color={colors.text.accent} />
+          <Text style={styles.loadingText}>Generating your Tarzana brief...</Text>
+        </View>
+        {[1, 2, 3].map((i) => <SkeletonCard key={i} variant="brief" />)}
+      </SafeAreaView>
+    )
+  }
+
+  if (error && !content) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Brief</Text>
+        </View>
+        <View style={styles.centerState}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => loadBrief(true)}>
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.center}>
-        <Text style={styles.label}>Brief</Text>
-        <Text style={styles.sublabel}>Daily Global-to-Home Briefing</Text>
-        <Text style={styles.zip}>Zip: {zip}</Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={() => loadBrief(true)}
+            tintColor={colors.text.accent}
+          />
+        }
+        contentContainerStyle={styles.scrollContent}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Brief</Text>
+          <Text style={styles.headerDate}>{dateLabel}</Text>
+          <Text style={styles.headerSub}>Your Tarzana · Los Angeles briefing</Text>
+        </View>
 
-        <TouchableOpacity style={styles.button} onPress={testPipeline} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Test Pipeline</Text>}
-        </TouchableOpacity>
+        {content?.global_snapshot && <GlobalSnapshotCard data={content.global_snapshot} />}
+        {content?.home_impact && <HomeImpactCard data={content.home_impact} />}
+        {content?.signal_teasers && content.signal_teasers.length > 0 && (
+          <SignalsTeaserCard teasers={content.signal_teasers} />
+        )}
+        {content?.rep_actions && content.rep_actions.length > 0 && (
+          <RepQuickActionCard reps={content.rep_actions} />
+        )}
+        {content?.personalized_close && <PersonalizedCloseCard data={content.personalized_close} />}
 
-        {result ? <Text style={styles.result}>{result}</Text> : null}
-      </View>
+        <Text style={styles.readTime}>5–7 min read · Updated daily at 7am</Text>
+      </ScrollView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 28, fontWeight: '700', color: colors.text.primary },
-  sublabel: { fontSize: 14, color: colors.text.secondary, marginTop: 8 },
-  zip: { fontSize: 13, color: colors.text.accent, marginTop: spacing.sm },
-  button: { backgroundColor: colors.text.accent, borderRadius: 12, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, marginTop: spacing.xl },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 15 },
-  result: { marginTop: spacing.lg, fontSize: 13, color: colors.text.secondary, textAlign: 'center', paddingHorizontal: spacing.lg },
+  scrollContent: { paddingBottom: spacing.xxl },
+  header: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  headerTitle: { fontSize: 28, fontWeight: '700', color: colors.text.primary },
+  headerDate: { fontSize: 14, color: colors.text.accent, fontWeight: '600', marginTop: 2 },
+  headerSub: { fontSize: 13, color: colors.text.secondary, marginTop: 2 },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  loadingText: { fontSize: 13, color: colors.text.secondary },
+  centerState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+    marginTop: 80,
+  },
+  errorText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  retryBtn: {
+    borderWidth: 1,
+    borderColor: colors.text.accent,
+    borderRadius: 8,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  retryBtnText: { color: colors.text.accent, fontWeight: '600', fontSize: 14 },
+  readTime: {
+    fontSize: 12,
+    color: colors.text.secondary,
+    textAlign: 'center',
+    paddingTop: spacing.md,
+  },
 })

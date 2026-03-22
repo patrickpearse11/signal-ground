@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { colors, spacing, radius } from '@/constants/theme'
+import { lightTap } from '@/utils/haptics'
 
 interface Props {
   value: 'all' | 'chokepoints'
@@ -13,7 +14,7 @@ export function FeedFilterToggle({ value, onChange }: Props) {
         <TouchableOpacity
           key={option}
           style={[styles.option, value === option && styles.optionActive]}
-          onPress={() => onChange(option)}
+          onPress={() => { lightTap(); onChange(option) }}
           activeOpacity={0.7}
         >
           <Text style={[styles.optionText, value === option && styles.optionTextActive]}>

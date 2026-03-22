@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useMemo } from 'react'
+import { useEffect, useCallback, useMemo, useState } from 'react'
 import {
   View, Text, FlatList, RefreshControl,
   StyleSheet, TouchableOpacity
@@ -8,6 +8,7 @@ import { NewsCard } from '@/components/signal/NewsCard'
 import { ChokepointCard } from '@/components/signal/ChokepointCard'
 import { FeedFilterToggle } from '@/components/signal/FeedFilterToggle'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { Toast } from '@/components/shared/Toast'
 import { useFeedStore } from '@/store/feedStore'
 import { fetchLatestSignals, generateSignals, fetchChokepoints } from '@/services/grokService'
 import { fetchCivicHeadlines } from '@/services/newsService'
@@ -23,6 +24,7 @@ export default function SignalScreen() {
     setSignals, setChokepoints, setIsLoading, setIsRefreshing,
     setLastUpdated, setError, setFeedFilter,
   } = useFeedStore()
+  const [toast, setToast] = useState({ visible: false, message: '' })
 
   const loadFeed = useCallback(async (refresh = false) => {
     if (refresh) setIsRefreshing(true)
@@ -74,7 +76,7 @@ export default function SignalScreen() {
   }, [signals, chokepoints, feedFilter])
 
   function handleSaveToImpact(signal: SignalCard) {
-    console.log('Saved to impact:', signal.neutral_title)
+    setToast({ visible: true, message: 'Saved to Impact' })
   }
 
   if (isLoading && signals.length === 0) {
@@ -85,7 +87,7 @@ export default function SignalScreen() {
           <Text style={styles.headerSub}>Civic intelligence feed</Text>
         </View>
         <FeedFilterToggle value={feedFilter} onChange={setFeedFilter} />
-        {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        {[1, 2, 3].map((i) => <SkeletonCard key={i} variant="news" />)}
       </SafeAreaView>
     )
   }
@@ -152,6 +154,11 @@ export default function SignalScreen() {
         removeClippedSubviews
         maxToRenderPerBatch={5}
         showsVerticalScrollIndicator={false}
+      />
+      <Toast
+        message={toast.message}
+        visible={toast.visible}
+        onHide={() => setToast({ visible: false, message: '' })}
       />
     </SafeAreaView>
   )

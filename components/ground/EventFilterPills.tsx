@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
 import { colors, spacing } from '@/constants/theme'
 import { CivicEvent } from '@/types/ground'
+import { lightTap } from '@/utils/haptics'
 
 type FilterType = 'all' | CivicEvent['event_type']
 
@@ -28,7 +29,7 @@ export function EventFilterPills({ value, onChange }: Props) {
         <TouchableOpacity
           key={f.value}
           style={[styles.pill, value === f.value && styles.pillActive]}
-          onPress={() => onChange(f.value)}
+          onPress={() => { lightTap(); onChange(f.value) }}
           activeOpacity={0.7}
         >
           <Text style={[styles.pillLabel, value === f.value && styles.pillLabelActive]}>

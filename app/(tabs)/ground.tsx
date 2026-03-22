@@ -61,7 +61,7 @@ export default function GroundScreen() {
           <Text style={styles.headerTitle}>Ground</Text>
           <Text style={styles.headerSub}>Your civic foundation</Text>
         </View>
-        {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        {[1, 2, 3].map((i) => <SkeletonCard key={i} variant="rep" />)}
       </SafeAreaView>
     )
   }

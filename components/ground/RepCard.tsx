@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native'
 import { Rep } from '@/types/ground'
 import { colors, spacing, radius } from '@/constants/theme'
+import { lightTap, mediumTap } from '@/utils/haptics'
 
 interface Props {
   rep: Rep
@@ -16,12 +17,14 @@ export function RepCard({ rep }: Props) {
   const levelConfig = LEVEL_CONFIG[rep.level]
 
   function handleCall() {
+    mediumTap()
     const cleaned = rep.phone.replace(/\D/g, '')
     if (!cleaned) return
     Linking.openURL(`tel:${cleaned}`)
   }
 
   function handleEmail() {
+    lightTap()
     if (!rep.email) return
     if (rep.email.startsWith('http')) {
       Linking.openURL(rep.email)

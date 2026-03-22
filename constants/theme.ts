@@ -1,3 +1,9 @@
+import { Platform } from 'react-native'
+
+export const fonts = {
+  editorial: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+}
+
 export const colors = {
   background: '#F8F7F4',
   surface: '#FFFFFF',
