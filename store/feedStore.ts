@@ -1,16 +1,32 @@
 import { create } from 'zustand'
-import type { SignalCard } from '@/types/signal'
+import { SignalCard } from '@/types/signal'
 
 interface FeedState {
   signals: SignalCard[]
   isLoading: boolean
+  isRefreshing: boolean
+  lastUpdated: Date | null
+  error: string | null
+
   setSignals: (signals: SignalCard[]) => void
-  setLoading: (loading: boolean) => void
+  appendSignals: (signals: SignalCard[]) => void
+  setIsLoading: (value: boolean) => void
+  setIsRefreshing: (value: boolean) => void
+  setLastUpdated: (date: Date) => void
+  setError: (error: string | null) => void
 }
 
 export const useFeedStore = create<FeedState>((set) => ({
   signals: [],
   isLoading: false,
+  isRefreshing: false,
+  lastUpdated: null,
+  error: null,
+
   setSignals: (signals) => set({ signals }),
-  setLoading: (isLoading) => set({ isLoading }),
+  appendSignals: (signals) => set((state) => ({ signals: [...state.signals, ...signals] })),
+  setIsLoading: (value) => set({ isLoading: value }),
+  setIsRefreshing: (value) => set({ isRefreshing: value }),
+  setLastUpdated: (date) => set({ lastUpdated: date }),
+  setError: (error) => set({ error }),
 }))
