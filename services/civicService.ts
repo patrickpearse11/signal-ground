@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import { Rep } from '@/types/ground'
+import { Rep, CouncilMeeting, CivicEvent } from '@/types/ground'
 
 const OPEN_STATES_KEY = process.env.EXPO_PUBLIC_OPEN_STATES_KEY
 
@@ -158,5 +158,43 @@ async function cacheReps(reps: Rep[], zip: string): Promise<void> {
     await supabase.from('ground_data').insert(rows)
   } catch (err) {
     console.warn('cacheReps failed:', err)
+  }
+}
+
+export async function fetchCouncilMeetings(zip: string): Promise<CouncilMeeting[]> {
+  try {
+    const { data, error } = await supabase
+      .from('ground_data')
+      .select('content_json')
+      .eq('type', 'meeting')
+      .eq('zip', zip)
+      .order('updated_at', { ascending: false })
+
+    if (error || !data?.length) return []
+    return data
+      .map((row: any) => row.content_json as CouncilMeeting)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  } catch (err) {
+    console.warn('fetchCouncilMeetings failed:', err)
+    return []
+  }
+}
+
+export async function fetchCivicEvents(zip: string): Promise<CivicEvent[]> {
+  try {
+    const { data, error } = await supabase
+      .from('ground_data')
+      .select('content_json')
+      .eq('type', 'event')
+      .eq('zip', zip)
+      .order('updated_at', { ascending: false })
+
+    if (error || !data?.length) return []
+    return data
+      .map((row: any) => row.content_json as CivicEvent)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  } catch (err) {
+    console.warn('fetchCivicEvents failed:', err)
+    return []
   }
 }
