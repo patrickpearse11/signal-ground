@@ -25,8 +25,8 @@ Generate a complete daily brief as strict JSON only — no preamble, no markdown
     "bullets": ["string", "string", "string"]
   },
   "home_impact": {
-    "headline": "string (global event → local number, e.g. 'Red Sea disruption → +12% grocery price risk this month')",
-    "explanation": "string (2 sentences expanding on why this affects Tarzana/LA specifically)",
+    "headline": "string (pick the most locally relevant story from global_snapshot and connect it to Tarzana/LA with a concrete number or impact, e.g. 'Iran conflict → gas prices up 18% at LA pumps this week')",
+    "explanation": "string (2 sentences — name the specific global_snapshot story and explain concretely how it reaches Tarzana/LA residents: prices, jobs, family abroad, energy, safety)",
     "zip": "{ZIP}"
   },
   "signal_teasers": [
