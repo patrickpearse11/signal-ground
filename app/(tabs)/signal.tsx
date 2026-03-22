@@ -1,40 +1,44 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useMemo } from 'react'
 import {
   View, Text, FlatList, RefreshControl,
   StyleSheet, TouchableOpacity
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { NewsCard } from '@/components/signal/NewsCard'
+import { ChokepointCard } from '@/components/signal/ChokepointCard'
+import { FeedFilterToggle } from '@/components/signal/FeedFilterToggle'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { useFeedStore } from '@/store/feedStore'
-import { fetchLatestSignals, generateSignals } from '@/services/grokService'
+import { fetchLatestSignals, generateSignals, fetchChokepoints } from '@/services/grokService'
 import { fetchCivicHeadlines } from '@/services/newsService'
 import { colors, spacing } from '@/constants/theme'
-import { SignalCard } from '@/types/signal'
+import { FeedItem, SignalCard } from '@/types/signal'
 
-// Only call Grok if last update was more than 15 minutes ago
 const REFRESH_COOLDOWN_MS = 15 * 60 * 1000
 
 export default function SignalScreen() {
   const {
-    signals, isLoading, isRefreshing, lastUpdated, error,
-    setSignals, setIsLoading, setIsRefreshing, setLastUpdated, setError,
+    signals, chokepoints, isLoading, isRefreshing,
+    lastUpdated, error, feedFilter,
+    setSignals, setChokepoints, setIsLoading, setIsRefreshing,
+    setLastUpdated, setError, setFeedFilter,
   } = useFeedStore()
 
-  const loadSignals = useCallback(async (refresh = false) => {
+  const loadFeed = useCallback(async (refresh = false) => {
     if (refresh) setIsRefreshing(true)
     else setIsLoading(true)
     setError(null)
 
     try {
-      // Always load from Supabase cache first
-      const cached = await fetchLatestSignals(20)
-      if (cached.length > 0) {
-        setSignals(cached)
-        setLastUpdated(new Date())
-      }
+      const [cached, chokepointData] = await Promise.all([
+        fetchLatestSignals(20),
+        fetchChokepoints(),
+      ])
 
-      // Only call Grok if refreshing AND cooldown has passed (saves API credits)
+      if (cached.length > 0) setSignals(cached)
+      if (chokepointData.length > 0) setChokepoints(chokepointData)
+      setLastUpdated(new Date())
+
       const cooldownPassed = !lastUpdated || Date.now() - lastUpdated.getTime() > REFRESH_COOLDOWN_MS
       if ((refresh && cooldownPassed) || cached.length === 0) {
         const headlines = await fetchCivicHeadlines()
@@ -47,16 +51,27 @@ export default function SignalScreen() {
       }
     } catch (err) {
       setError('Could not load signals. Pull down to retry.')
-      console.warn('Signal load error:', err)
     } finally {
       setIsLoading(false)
       setIsRefreshing(false)
     }
   }, [lastUpdated])
 
-  useEffect(() => {
-    loadSignals()
-  }, [])
+  useEffect(() => { loadFeed() }, [])
+
+  const feedItems: FeedItem[] = useMemo(() => {
+    if (feedFilter === 'chokepoints') {
+      return chokepoints.map((c) => ({ type: 'chokepoint' as const, data: c }))
+    }
+    const items: FeedItem[] = []
+    signals.forEach((s, i) => {
+      items.push({ type: 'signal' as const, data: s })
+      if ((i + 1) % 4 === 0 && chokepoints[Math.floor(i / 4)]) {
+        items.push({ type: 'chokepoint' as const, data: chokepoints[Math.floor(i / 4)] })
+      }
+    })
+    return items
+  }, [signals, chokepoints, feedFilter])
 
   function handleSaveToImpact(signal: SignalCard) {
     console.log('Saved to impact:', signal.neutral_title)
@@ -69,6 +84,7 @@ export default function SignalScreen() {
           <Text style={styles.headerTitle}>Signal</Text>
           <Text style={styles.headerSub}>Civic intelligence feed</Text>
         </View>
+        <FeedFilterToggle value={feedFilter} onChange={setFeedFilter} />
         {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
       </SafeAreaView>
     )
@@ -82,7 +98,7 @@ export default function SignalScreen() {
         </View>
         <View style={styles.centerState}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => loadSignals()}>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => loadFeed()}>
             <Text style={styles.retryBtnText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -93,68 +109,65 @@ export default function SignalScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        data={signals}
-        keyExtractor={(item) => item.id ?? item.neutral_title}
-        renderItem={({ item }) => (
-          <NewsCard signal={item} onSaveToImpact={handleSaveToImpact} />
-        )}
+        data={feedItems}
+        keyExtractor={(item) =>
+          item.type === 'signal'
+            ? (item.data.id ?? item.data.neutral_title)
+            : (item.data.id ?? item.data.route_name)
+        }
+        renderItem={({ item }) =>
+          item.type === 'signal'
+            ? <NewsCard signal={item.data} onSaveToImpact={handleSaveToImpact} />
+            : <ChokepointCard chokepoint={item.data} />
+        }
         ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Signal</Text>
-            <Text style={styles.headerSub}>
-              {lastUpdated
-                ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                : 'Civic intelligence feed'}
-            </Text>
+          <View>
+            <View style={styles.header}>
+              <Text style={styles.headerTitle}>Signal</Text>
+              <Text style={styles.headerSub}>
+                {lastUpdated
+                  ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                  : 'Civic intelligence feed'}
+              </Text>
+            </View>
+            <FeedFilterToggle value={feedFilter} onChange={setFeedFilter} />
           </View>
         }
         ListEmptyComponent={
           <View style={styles.centerState}>
-            <Text style={styles.emptyText}>No signals yet</Text>
-            <Text style={styles.emptySubText}>Pull down to load your civic feed</Text>
+            <Text style={styles.emptyText}>
+              {feedFilter === 'chokepoints' ? 'No chokepoint data yet' : 'No signals yet'}
+            </Text>
+            <Text style={styles.emptySubText}>Pull down to refresh</Text>
           </View>
         }
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
-            onRefresh={() => loadSignals(true)}
+            onRefresh={() => loadFeed(true)}
             tintColor={colors.text.accent}
           />
         }
         contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
         removeClippedSubviews
         maxToRenderPerBatch={5}
+        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.text.primary,
-  },
-  headerSub: {
-    fontSize: 13,
-    color: colors.text.secondary,
-    marginTop: 2,
-  },
-  listContent: {
-    paddingBottom: spacing.xl,
-  },
+  headerTitle: { fontSize: 28, fontWeight: '700', color: colors.text.primary },
+  headerSub: { fontSize: 13, color: colors.text.secondary, marginTop: 2 },
+  listContent: { paddingBottom: spacing.xl },
   centerState: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.xl,
@@ -166,17 +179,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: spacing.md,
   },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text.primary,
-    marginBottom: spacing.sm,
-  },
-  emptySubText: {
-    fontSize: 14,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
+  emptyText: { fontSize: 16, fontWeight: '600', color: colors.text.primary, marginBottom: spacing.sm },
+  emptySubText: { fontSize: 14, color: colors.text.secondary, textAlign: 'center' },
   retryBtn: {
     borderWidth: 1,
     borderColor: colors.text.accent,
@@ -184,9 +188,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
   },
-  retryBtnText: {
-    color: colors.text.accent,
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  retryBtnText: { color: colors.text.accent, fontWeight: '600', fontSize: 14 },
 })

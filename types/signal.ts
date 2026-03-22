@@ -19,11 +19,16 @@ export interface RawHeadline {
   publishedAt: string
 }
 
-// Chokepoint cards — powered by trade_routes table in Supabase
 export interface ChokepointCard {
-  id: string
-  route_name: string   // e.g. "Panama Canal", "Suez Canal", "Strait of Hormuz"
-  status: string       // e.g. "open", "congested", "closed"
-  grok_oneliner: string // Grok-generated one-line status summary
-  updated_at: string
+  id?: string
+  route_name: string
+  status: 'clear' | 'disrupted' | 'watch' | 'critical'
+  grok_oneliner: string
+  region: string
+  impact_category: 'prices' | 'fuel' | 'jobs' | 'imports'
+  updated_at?: string
 }
+
+export type FeedItem =
+  | { type: 'signal'; data: SignalCard }
+  | { type: 'chokepoint'; data: ChokepointCard }

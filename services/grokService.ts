@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import { SignalCard, RawHeadline } from '@/types/signal'
+import { SignalCard, RawHeadline, ChokepointCard } from '@/types/signal'
 
 /**
  * Sends headlines to the generate-signal Edge Function, gets back SignalCards.
@@ -44,6 +44,29 @@ export async function fetchLatestSignals(limit = 20): Promise<SignalCard[]> {
 
   } catch (err) {
     console.warn('fetchLatestSignals failed:', err)
+    return []
+  }
+}
+
+export async function fetchChokepoints(): Promise<ChokepointCard[]> {
+  try {
+    const { data, error } = await supabase
+      .from('trade_routes')
+      .select('*')
+      .order('updated_at', { ascending: false })
+
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      route_name: row.route_name,
+      status: row.status as ChokepointCard['status'],
+      grok_oneliner: row.grok_oneliner,
+      region: row.region || '',
+      impact_category: (row.impact_category || 'prices') as ChokepointCard['impact_category'],
+      updated_at: row.updated_at,
+    }))
+  } catch (err) {
+    console.warn('fetchChokepoints failed:', err)
     return []
   }
 }
