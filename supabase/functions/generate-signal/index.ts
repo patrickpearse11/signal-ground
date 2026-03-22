@@ -10,7 +10,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SYSTEM_PROMPT = `You are a senior neutral global intelligence analyst. Search the web for today's most significant global stories across these domains:
+const SYSTEM_PROMPT = `You are a senior neutral global intelligence analyst. Draw on your knowledge of current global events to identify the most significant stories across these domains:
 - Geopolitical conflicts and diplomacy
 - Trade chokepoints (Suez, Panama, Strait of Hormuz, etc.)
 - Energy markets (oil, gas, electricity prices)
@@ -47,12 +47,11 @@ async function callGrokWithWebSearch(): Promise<any[]> {
       model: 'grok-3',
       temperature: 0.3,
       max_tokens: 3000,
-      tools: [{ type: 'function', function: { name: 'web_search' } }],
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
-          content: `Today is ${today}. Search the web for today's most significant global intelligence stories across the domains listed. Return exactly 5 signal cards as a JSON array.`,
+          content: `Today is ${today}. Based on your knowledge of current global events, generate 5 signal cards covering the domains listed. Return exactly 5 signal cards as a JSON array.`,
         },
       ],
     }),

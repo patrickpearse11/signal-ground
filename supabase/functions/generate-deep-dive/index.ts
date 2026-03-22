@@ -13,7 +13,7 @@ Rules:
 - 3 to 4 paragraphs total
 - Neutral tone — no loaded language, no political framing
 - Connect global events to local impact for Tarzana/Los Angeles residents where relevant
-- Use web search to find the most current information on these topics
+- Draw on your knowledge of these events and their broader context
 - End with one forward-looking paragraph: what to watch in the next 48–72 hours
 - Output plain text only — no JSON, no markdown headers, no bullet points`
 
@@ -30,7 +30,6 @@ async function callGrokDeepDive(bullets: string[]): Promise<string> {
       model: 'grok-3',
       temperature: 0.3,
       max_tokens: 1000,
-      tools: [{ type: 'function', function: { name: 'web_search' } }],
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {
