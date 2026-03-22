@@ -1,14 +1,22 @@
 export type PerspectivesType = 'balanced' | 'consensus' | 'divergent'
 
 export interface SignalCard {
-  id: string
+  id?: string
   neutral_title: string
   summary_paragraph: string
   perspectives: PerspectivesType
   local_impact: string
   tags: string[]
   escalation_level: 1 | 2 | 3 | 4 | 5
-  created_at: string
+  created_at?: string
+}
+
+export interface RawHeadline {
+  title: string
+  description: string | null
+  source: string
+  url: string
+  publishedAt: string
 }
 
 // Chokepoint cards — powered by trade_routes table in Supabase
