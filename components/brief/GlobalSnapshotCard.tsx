@@ -1,12 +1,47 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { useState } from 'react'
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
 import { GlobalSnapshot } from '@/types/brief'
 import { colors, spacing, radius, fonts } from '@/constants/theme'
+import { lightTap } from '@/utils/haptics'
 
 interface Props {
   data: GlobalSnapshot
 }
 
 export function GlobalSnapshotCard({ data }: Props) {
+  const [expanded, setExpanded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [report, setReport] = useState<string | null>(null)
+
+  async function fetchDeepDive() {
+    if (report) {
+      lightTap()
+      setExpanded(e => !e)
+      return
+    }
+    lightTap()
+    setLoading(true)
+    try {
+      const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/generate-deep-dive`
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ bullets: data.bullets }),
+      })
+      const json = await res.json()
+      setReport(json.report || 'Unable to load deep dive.')
+      setExpanded(true)
+    } catch {
+      setReport('Unable to load deep dive right now.')
+      setExpanded(true)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <View style={styles.card}>
       <View style={styles.labelRow}>
@@ -22,6 +57,20 @@ export function GlobalSnapshotCard({ data }: Props) {
           </View>
         ))}
       </View>
+
+      <TouchableOpacity style={styles.deepDiveBtn} onPress={fetchDeepDive} activeOpacity={0.8} disabled={loading}>
+        {loading ? (
+          <ActivityIndicator size="small" color={colors.text.accent} />
+        ) : (
+          <Text style={styles.deepDiveBtnText}>{expanded ? 'Hide Deep Dive' : 'Deep Dive →'}</Text>
+        )}
+      </TouchableOpacity>
+
+      {expanded && report ? (
+        <View style={styles.reportContainer}>
+          <Text style={styles.reportText}>{report}</Text>
+        </View>
+      ) : null}
     </View>
   )
 }
@@ -81,5 +130,33 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     lineHeight: 21,
     flex: 1,
+  },
+  deepDiveBtn: {
+    marginTop: spacing.md,
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.text.accent,
+    minWidth: 44,
+    alignItems: 'center',
+  },
+  deepDiveBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.text.accent,
+    letterSpacing: 0.5,
+  },
+  reportContainer: {
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+    borderTopWidth: 0.5,
+    borderTopColor: colors.border,
+  },
+  reportText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    lineHeight: 22,
   },
 })

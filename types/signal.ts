@@ -8,6 +8,7 @@ export interface SignalCard {
   local_impact: string
   tags: string[]
   escalation_level: 1 | 2 | 3 | 4 | 5
+  source_region?: string
   created_at?: string
 }
 

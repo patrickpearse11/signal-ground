@@ -5,6 +5,7 @@ import { lightTap, mediumTap } from '@/utils/haptics'
 
 interface Props {
   rep: Rep
+  currentAction?: string
 }
 
 const LEVEL_CONFIG = {
@@ -13,7 +14,7 @@ const LEVEL_CONFIG = {
   federal: { label: 'FEDERAL', color: '#B45309', bg: '#FEF3C7' },
 }
 
-export function RepCard({ rep }: Props) {
+export function RepCard({ rep, currentAction }: Props) {
   const levelConfig = LEVEL_CONFIG[rep.level]
 
   function handleCall() {
@@ -64,7 +65,12 @@ export function RepCard({ rep }: Props) {
 
       </View>
 
-      {rep.current_issue ? (
+      {currentAction ? (
+        <View style={styles.actionRow}>
+          <Text style={styles.actionLabel}>THIS WEEK: </Text>
+          <Text style={styles.actionText}>{currentAction}</Text>
+        </View>
+      ) : rep.current_issue ? (
         <View style={styles.issueRow}>
           <Text style={styles.issueLabel}>Current focus: </Text>
           <Text style={styles.issueText}>{rep.current_issue}</Text>
@@ -157,6 +163,28 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.text.secondary,
     marginTop: 1,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: '#EBF3FF',
+    borderRadius: radius.sm,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.text.accent,
+  },
+  actionLabel: {
+    fontSize: 11,
+    color: colors.text.accent,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  actionText: {
+    fontSize: 12,
+    color: colors.text.accent,
+    flex: 1,
+    fontWeight: '500',
   },
   issueRow: {
     flexDirection: 'row',

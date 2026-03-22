@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { useRouter } from 'expo-router'
 import { PersonalizedClose } from '@/types/brief'
 import { colors, spacing, radius, fonts } from '@/constants/theme'
@@ -18,6 +18,12 @@ export function PersonalizedCloseCard({ data }: Props) {
         <Text style={styles.label}>YOUR MOVE TODAY</Text>
       </View>
       <Text style={styles.action}>{data.action}</Text>
+      {data.deadline ? (
+        <View style={styles.deadlineRow}>
+          <Text style={styles.deadlineIcon}>⏱</Text>
+          <Text style={styles.deadlineText}>{data.deadline}</Text>
+        </View>
+      ) : null}
       <View style={styles.ctaRow}>
         <TouchableOpacity style={styles.ctaBtn} onPress={() => { lightTap(); router.push('/(tabs)/ground') }} activeOpacity={0.85}>
           <Text style={styles.ctaBtnText}>{data.cta_ground}</Text>
@@ -62,8 +68,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text.primary,
     lineHeight: 24,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     fontFamily: fonts.editorial,
+  },
+  deadlineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing.md,
+  },
+  deadlineIcon: {
+    fontSize: 12,
+  },
+  deadlineText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.text.accent,
   },
   ctaRow: { flexDirection: 'row', gap: spacing.sm },
   ctaBtn: {

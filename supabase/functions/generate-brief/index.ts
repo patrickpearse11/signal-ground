@@ -10,9 +10,11 @@ const BRIEF_SYSTEM_PROMPT = `You are a senior neutral civic analyst generating a
 Your tone: calm, authoritative, precise. Never alarmist. Always ties global → local.
 
 You will receive:
-- Top news headlines from today
+- Top global news signals from today
 - Current trade route statuses
-- Local representative information
+- Local representative information including their current active issues/votes
+
+URGENCY REQUIREMENT: Every action in personalized_close must reference a REAL upcoming deadline — a vote scheduled this week, a comment period closing, a city council meeting, a budget deadline. Use specific dates. Never say "when you have time" or vague language. If you know of a real deadline this week, use it.
 
 Generate a complete daily brief as strict JSON only — no preamble, no markdown, just the raw JSON:
 
@@ -38,11 +40,12 @@ Generate a complete daily brief as strict JSON only — no preamble, no markdown
       "role": "string",
       "phone": "string",
       "email": "string",
-      "issue": "string (the top current issue this rep is working on)"
+      "issue": "string (the specific vote, hearing, or action this rep is engaged in THIS WEEK — be specific, not generic)"
     }
   ],
   "personalized_close": {
-    "action": "string (one specific thing the resident can do today)",
+    "action": "string (one specific thing the resident can do today, referencing a real issue)",
+    "deadline": "string (specific deadline e.g. 'Council vote is Thursday, March 27' or 'Comment period closes Friday')",
     "cta_ground": "string (e.g. 'View your reps')",
     "cta_impact": "string (e.g. 'See local actions')"
   },
@@ -78,7 +81,7 @@ async function callGrok(prompt: string, zip: string): Promise<any> {
         'Authorization': `Bearer ${GROK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'grok-4-1-fast', // Confirmed model ID
+        model: 'grok-3',
         temperature: 0.3,
         max_tokens: 1500,
         messages: [
@@ -187,11 +190,12 @@ TRADE ROUTE STATUS:
 ${(routes || []).map((r: any) => `• ${r.route_name}: ${r.status} — ${r.grok_oneliner}`).join('\n')}
 
 LOCAL REPRESENTATIVES FOR ZIP ${zip}:
-${DEFAULT_REPS.map(r => `• ${r.name}, ${r.role} | ${r.phone} | ${r.email}`).join('\n')}
+${DEFAULT_REPS.map(r => `• ${r.name}, ${r.role} | ${r.phone} | ${r.email} — known issue: ${r.issue}`).join('\n')}
 
 Generate the complete daily brief JSON for a Tarzana resident at zip ${zip}.
 For signal_teasers, use the actual signal IDs provided above.
-For rep_actions, use the representatives listed above.
+For rep_actions, use the representatives listed above but ENRICH each rep's "issue" field with what you know about their CURRENT votes, hearings, or actions THIS WEEK (${today}). Be specific — name the bill, budget item, or council motion if you know it.
+For personalized_close.deadline, give a REAL upcoming deadline this week. Be specific with the date.
 `.trim()
 
     const briefContent = await callGrok(userPrompt, zip)

@@ -8,6 +8,7 @@ export interface Rep {
   email: string
   party?: string
   current_issue?: string
+  current_action?: string  // enriched from today's brief — specific vote/hearing this week
   zip: string
 }
 

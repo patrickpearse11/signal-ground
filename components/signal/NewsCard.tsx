@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { SignalCard } from '@/types/signal'
 import { EscalationBadge } from '@/components/shared/EscalationBadge'
 import { PerspectivesBadge } from '@/components/shared/PerspectivesBadge'
@@ -33,9 +33,16 @@ export function NewsCard({ signal, onSaveToImpact }: Props) {
   return (
     <View style={styles.card}>
 
-      {/* Header row — escalation + perspectives */}
+      {/* Header row — escalation + perspectives + region */}
       <View style={styles.headerRow}>
-        <EscalationBadge level={signal.escalation_level} />
+        <View style={styles.headerLeft}>
+          <EscalationBadge level={signal.escalation_level} />
+          {signal.source_region ? (
+            <View style={styles.regionBadge}>
+              <Text style={styles.regionText}>{signal.source_region.toUpperCase()}</Text>
+            </View>
+          ) : null}
+        </View>
         <PerspectivesBadge perspectives={signal.perspectives} />
       </View>
 
@@ -98,6 +105,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: spacing.sm,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  regionBadge: {
+    backgroundColor: colors.background,
+    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderWidth: 0.5,
+    borderColor: colors.border,
+  },
+  regionText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colors.text.secondary,
+    letterSpacing: 0.5,
   },
   title: {
     fontSize: 17,

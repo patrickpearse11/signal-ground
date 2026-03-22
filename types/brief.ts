@@ -24,6 +24,7 @@ export interface RepAction {
 
 export interface PersonalizedClose {
   action: string    // "One thing you can do today"
+  deadline: string  // real deadline e.g. "Comment period closes Friday, March 28"
   cta_ground: string
   cta_impact: string
 }

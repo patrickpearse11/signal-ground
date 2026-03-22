@@ -1,11 +1,11 @@
 import { supabase } from './supabaseClient'
-import { SignalCard, RawHeadline, ChokepointCard } from '@/types/signal'
+import { SignalCard, ChokepointCard } from '@/types/signal'
 
 /**
- * Sends headlines to the generate-signal Edge Function, gets back SignalCards.
- * All AI logic lives in the Edge Function — this is just the client caller.
+ * Calls generate-signal Edge Function — Grok web_search finds today's stories itself.
+ * No headlines needed — the Edge Function searches the web directly.
  */
-export async function generateSignals(headlines: RawHeadline[]): Promise<SignalCard[]> {
+export async function generateSignals(): Promise<SignalCard[]> {
   try {
     const url = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/generate-signal`
     const response = await fetch(url, {
@@ -14,7 +14,7 @@ export async function generateSignals(headlines: RawHeadline[]): Promise<SignalC
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`,
       },
-      body: JSON.stringify({ headlines }),
+      body: JSON.stringify({}),
     })
 
     if (!response.ok) throw new Error(`Edge function error: ${response.status}`)

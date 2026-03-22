@@ -11,6 +11,7 @@ import { EventFilterPills } from '@/components/ground/EventFilterPills'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { useGroundStore } from '@/store/groundStore'
 import { useUserStore } from '@/store/userStore'
+import { useBriefStore } from '@/store/briefStore'
 import { fetchRepsByZip, fetchCouncilMeetings, fetchCivicEvents } from '@/services/civicService'
 import { colors, spacing } from '@/constants/theme'
 import { CivicEvent } from '@/types/ground'
@@ -22,6 +23,7 @@ export default function GroundScreen() {
   const { reps, meetings, events, isLoading, error,
     setReps, setMeetings, setEvents, setIsLoading, setError } = useGroundStore()
   const { zip } = useUserStore()
+  const { brief } = useBriefStore()
   const [eventFilter, setEventFilter] = useState<EventFilter>('all')
 
   const loadGround = useCallback(async (_refresh = false) => {
@@ -109,19 +111,37 @@ export default function GroundScreen() {
         {localReps.length > 0 && (
           <View style={styles.repGroup}>
             <Text style={styles.groupLabel}>LOCAL GOVERNMENT</Text>
-            {localReps.map((rep, i) => <RepCard key={i} rep={rep} />)}
+            {localReps.map((rep, i) => (
+              <RepCard
+                key={i}
+                rep={rep}
+                currentAction={brief?.content_json.rep_actions.find(r => r.name === rep.name)?.issue}
+              />
+            ))}
           </View>
         )}
         {stateReps.length > 0 && (
           <View style={styles.repGroup}>
             <Text style={styles.groupLabel}>STATE GOVERNMENT</Text>
-            {stateReps.map((rep, i) => <RepCard key={i} rep={rep} />)}
+            {stateReps.map((rep, i) => (
+              <RepCard
+                key={i}
+                rep={rep}
+                currentAction={brief?.content_json.rep_actions.find(r => r.name === rep.name)?.issue}
+              />
+            ))}
           </View>
         )}
         {federalReps.length > 0 && (
           <View style={styles.repGroup}>
             <Text style={styles.groupLabel}>FEDERAL GOVERNMENT</Text>
-            {federalReps.map((rep, i) => <RepCard key={i} rep={rep} />)}
+            {federalReps.map((rep, i) => (
+              <RepCard
+                key={i}
+                rep={rep}
+                currentAction={brief?.content_json.rep_actions.find(r => r.name === rep.name)?.issue}
+              />
+            ))}
           </View>
         )}
 

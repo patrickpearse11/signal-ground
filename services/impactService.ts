@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import { ActionOpportunity, CommunityRipple, ImpactScore } from '@/types/impact'
+import { ActionOpportunity, CommunityRipple, ImpactScore, Outcome } from '@/types/impact'
 import { CivicEvent } from '@/types/ground'
 
 const POINTS = {
@@ -161,6 +161,30 @@ export async function fetchPersonalScore(userId: string): Promise<ImpactScore> {
   } catch (err) {
     console.warn('fetchPersonalScore failed:', err)
     return defaultScore
+  }
+}
+
+export async function fetchOutcomes(): Promise<Outcome[]> {
+  try {
+    const { data, error } = await supabase
+      .from('outcomes')
+      .select('*')
+      .order('date', { ascending: false })
+      .limit(10)
+
+    if (error) throw error
+    return (data || []).map((row: any) => ({
+      id: row.id,
+      rep_name: row.rep_name,
+      action_taken: row.action_taken,
+      result: row.result,
+      status: row.status as Outcome['status'],
+      date: row.date,
+      signal_title: row.signal_title || undefined,
+    }))
+  } catch (err) {
+    console.warn('fetchOutcomes failed:', err)
+    return []
   }
 }
 

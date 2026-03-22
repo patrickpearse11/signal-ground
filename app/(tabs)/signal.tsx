@@ -11,7 +11,6 @@ import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { Toast } from '@/components/shared/Toast'
 import { useFeedStore } from '@/store/feedStore'
 import { fetchLatestSignals, generateSignals, fetchChokepoints } from '@/services/grokService'
-import { fetchCivicHeadlines } from '@/services/newsService'
 import { colors, spacing } from '@/constants/theme'
 import { FeedItem, SignalCard } from '@/types/signal'
 
@@ -43,8 +42,7 @@ export default function SignalScreen() {
 
       const cooldownPassed = !lastUpdated || Date.now() - lastUpdated.getTime() > REFRESH_COOLDOWN_MS
       if ((refresh && cooldownPassed) || cached.length === 0) {
-        const headlines = await fetchCivicHeadlines()
-        const fresh = await generateSignals(headlines)
+        const fresh = await generateSignals()
         if (fresh.length > 0) {
           const updated = await fetchLatestSignals(20)
           setSignals(updated)

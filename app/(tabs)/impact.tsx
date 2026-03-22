@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ActionCard } from '@/components/impact/ActionCard'
 import { ScoreMeter } from '@/components/impact/ScoreMeter'
 import { CommunityRippleCard } from '@/components/impact/CommunityRippleCard'
+import { OutcomeCard } from '@/components/impact/OutcomeCard'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { useImpactStore } from '@/store/impactStore'
 import { useUserStore } from '@/store/userStore'
@@ -14,12 +15,13 @@ import {
   fetchActionOpportunities,
   fetchCommunityRipple,
   fetchPersonalScore,
+  fetchOutcomes,
 } from '@/services/impactService'
 import { colors, spacing } from '@/constants/theme'
 
 export default function ImpactScreen() {
-  const { opportunities, ripple, score, isLoading, error,
-    setOpportunities, setRipple, setScore, setIsLoading, setError } = useImpactStore()
+  const { opportunities, ripple, score, outcomes, isLoading, error,
+    setOpportunities, setRipple, setScore, setOutcomes, setIsLoading, setError } = useImpactStore()
   const { userId, zip } = useUserStore()
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
 
@@ -28,14 +30,16 @@ export default function ImpactScreen() {
     setIsLoading(true)
     setError(null)
     try {
-      const [ops, communityRipple, personalScore] = await Promise.all([
+      const [ops, communityRipple, personalScore, outcomesList] = await Promise.all([
         fetchActionOpportunities(userId, zip),
         fetchCommunityRipple(zip),
         fetchPersonalScore(userId),
+        fetchOutcomes(),
       ])
       setOpportunities(ops)
       setRipple(communityRipple)
       setScore(personalScore)
+      setOutcomes(outcomesList)
     } catch (err) {
       setError('Could not load impact data. Pull down to retry.')
     } finally {
@@ -134,7 +138,23 @@ export default function ImpactScreen() {
 
         <View style={styles.divider} />
 
-        {/* SECTION 3: PERSONAL SCORE */}
+        {/* SECTION 3: OUTCOMES */}
+        {outcomes.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Did It Work?</Text>
+              <Text style={styles.sectionSub}>Outcomes from recent civic actions in Tarzana</Text>
+            </View>
+            <View style={styles.sectionContent}>
+              {outcomes.map((outcome, i) => (
+                <OutcomeCard key={outcome.id ?? i} outcome={outcome} />
+              ))}
+            </View>
+            <View style={styles.divider} />
+          </>
+        )}
+
+        {/* SECTION 4: PERSONAL SCORE */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Score</Text>
           <Text style={styles.sectionSub}>Updated after each action</Text>
