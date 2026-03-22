@@ -34,8 +34,11 @@ Find 5 distinct stories from different regions. For each story, output a JSON ob
 
 Output a strict JSON array of exactly 5 objects. No preamble, no markdown, no explanation. Just the raw JSON array.`
 
-async function callGrokWithWebSearch(): Promise<any[]> {
+async function callGrokWithWebSearch(existingTitles: string[] = []): Promise<any[]> {
   const today = new Date().toISOString().split('T')[0]
+  const avoidClause = existingTitles.length > 0
+    ? `\n\nDo NOT generate stories about topics already covered today:\n${existingTitles.map(t => `- ${t}`).join('\n')}\n\nChoose entirely different stories.`
+    : ''
 
   const response = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
@@ -51,7 +54,7 @@ async function callGrokWithWebSearch(): Promise<any[]> {
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
-          content: `Today is ${today}. Based on your knowledge of current global events, generate 5 signal cards covering the domains listed. Return exactly 5 signal cards as a JSON array.`,
+          content: `Today is ${today}. Based on your knowledge of current global events, generate 5 signal cards covering the domains listed. Each card must be about a DISTINCT topic from a DIFFERENT region.${avoidClause}\n\nReturn exactly 5 signal cards as a JSON array.`,
         },
       ],
     }),
@@ -72,11 +75,14 @@ async function callGrokWithWebSearch(): Promise<any[]> {
   return parsed
 }
 
-async function callClaudeFallback(): Promise<any[]> {
+async function callClaudeFallback(existingTitles: string[] = []): Promise<any[]> {
   const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')
   if (!ANTHROPIC_KEY) throw new Error('No fallback API key available')
 
   const today = new Date().toISOString().split('T')[0]
+  const avoidClause = existingTitles.length > 0
+    ? `\n\nDo NOT generate stories about topics already covered today:\n${existingTitles.map(t => `- ${t}`).join('\n')}\n\nChoose entirely different stories.`
+    : ''
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -91,7 +97,7 @@ async function callClaudeFallback(): Promise<any[]> {
       system: SYSTEM_PROMPT,
       messages: [{
         role: 'user',
-        content: `Today is ${today}. Generate 5 plausible global intelligence signal cards based on ongoing world events you know about. Return a JSON array.`,
+        content: `Today is ${today}. Generate 5 global intelligence signal cards. Each must be about a DISTINCT topic from a DIFFERENT region.${avoidClause}\n\nReturn a JSON array.`,
       }],
     }),
   })
@@ -130,32 +136,62 @@ serve(async (req) => {
       )
     }
 
-    // Fetch fresh signals
+    // Fetch existing signals from last 24h to avoid topic overlap
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const { data: recentSignals } = await supabase
+      .from('signals')
+      .select('neutral_title, tags')
+      .gte('created_at', oneDayAgo)
+
+    const existingTitles = (recentSignals || []).map((s: any) => s.neutral_title)
+    const existingTagSets: string[][] = (recentSignals || []).map((s: any) => s.tags || [])
+
+    // Fetch fresh signals, passing existing topics to avoid redundancy
     let cards: any[]
     try {
-      cards = await callGrokWithWebSearch()
+      cards = await callGrokWithWebSearch(existingTitles)
     } catch (err) {
-      console.warn('Grok web_search failed, trying Claude fallback:', err)
-      cards = await callClaudeFallback()
+      console.warn('Grok failed, trying Claude fallback:', err)
+      cards = await callClaudeFallback(existingTitles)
+    }
+
+    // Dedup helper — returns true if card shares 2+ tags with any existing signal
+    function hasTagOverlap(cardTags: string[]): boolean {
+      const lower = cardTags.map((t: string) => t.toLowerCase())
+      return existingTagSets.some(existing => {
+        const existingLower = existing.map((t: string) => t.toLowerCase())
+        const shared = lower.filter(t => existingLower.includes(t))
+        return shared.length >= 2
+      })
     }
 
     const results = []
+    const insertedTagSets: string[][] = []
+
     for (const card of cards.slice(0, 5)) {
       if (!card.neutral_title || !card.summary_paragraph) {
         console.warn('Invalid card shape, skipping:', card)
         continue
       }
 
-      // Dedup check
-      const { data: existing } = await supabase
-        .from('signals')
-        .select('id')
-        .eq('neutral_title', card.neutral_title)
-        .limit(1)
-        .single()
+      const cardTags: string[] = card.tags || []
 
-      if (existing) {
-        console.log('Duplicate signal, skipping:', card.neutral_title)
+      // Skip if title already exists
+      if (existingTitles.includes(card.neutral_title)) {
+        console.log('Duplicate title, skipping:', card.neutral_title)
+        continue
+      }
+
+      // Skip if topic already covered (2+ tag overlap with existing OR already inserted this run)
+      const allTagSets = [...existingTagSets, ...insertedTagSets]
+      const lowerCardTags = cardTags.map((t: string) => t.toLowerCase())
+      const isDupe = allTagSets.some(existing => {
+        const existingLower = existing.map((t: string) => t.toLowerCase())
+        return lowerCardTags.filter(t => existingLower.includes(t)).length >= 2
+      })
+
+      if (isDupe) {
+        console.log('Topic overlap, skipping:', card.neutral_title)
         continue
       }
 
@@ -166,7 +202,7 @@ serve(async (req) => {
           summary_paragraph: card.summary_paragraph,
           perspectives: card.perspectives || 'balanced',
           local_impact: card.local_impact || '',
-          tags: card.tags || [],
+          tags: cardTags,
           escalation_level: card.escalation_level || 1,
           source_region: card.source_region || 'Global',
         })
@@ -177,6 +213,7 @@ serve(async (req) => {
         console.warn('Supabase insert error:', error)
       } else {
         results.push(data)
+        insertedTagSets.push(cardTags)
       }
     }
 

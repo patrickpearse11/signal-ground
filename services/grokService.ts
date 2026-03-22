@@ -40,12 +40,25 @@ export async function fetchLatestSignals(limit = 20, offset = 0): Promise<Signal
       .range(offset, offset + limit - 1)
 
     if (error) throw error
-    return data || []
+    return deduplicateByTags(data || [])
 
   } catch (err) {
     console.warn('fetchLatestSignals failed:', err)
     return []
   }
+}
+
+function deduplicateByTags(signals: SignalCard[]): SignalCard[] {
+  const seen: string[][] = []
+  return signals.filter(signal => {
+    const tags = (signal.tags || []).map(t => t.toLowerCase())
+    const isDupe = seen.some(existing => {
+      const shared = tags.filter(t => existing.includes(t))
+      return shared.length >= 2
+    })
+    if (!isDupe) seen.push(tags)
+    return !isDupe
+  })
 }
 
 export async function fetchChokepoints(): Promise<ChokepointCard[]> {
