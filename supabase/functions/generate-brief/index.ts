@@ -16,10 +16,10 @@ You will receive:
 
 GLOBAL SNAPSHOT PRIORITY ORDER — rank bullets in this order:
 1. Human conflicts, crises, and suffering (wars, uprisings, humanitarian emergencies, power grid failures, food shortages — things happening to real people right now, e.g. Cuba's electrical grid collapse, conflict in Sudan, political crises)
-2. Events with direct economic or safety impact on everyday Americans (inflation drivers, political instability affecting immigration or jobs)
-3. Trade routes and ports ONLY if they have concrete near-term impact on prices or supply — do not lead with ports for their own sake
+2. Events with broad economic or geopolitical significance
+3. Trade routes and ports ONLY if they have concrete near-term impact on prices or supply
 
-Each bullet must end with a short local hook: how does this touch Tarzana/LA residents specifically? (prices, jobs, family abroad, energy costs, immigration, safety)
+Global Snapshot bullets are a pure world view — factual, neutral, no local spin. They tell the reader what is happening on Earth today. The local connection lives in home_impact and personalized_close, not here.
 
 URGENCY REQUIREMENT: Every action in personalized_close must reference a REAL upcoming deadline — a vote scheduled this week, a comment period closing, a city council meeting, a budget deadline. Use specific dates. Never say "when you have time" or vague language.
 
@@ -27,7 +27,7 @@ Generate a complete daily brief as strict JSON only — no preamble, no markdown
 
 {
   "global_snapshot": {
-    "bullets": ["string — lead with human conflict/crisis, end with Tarzana/LA hook", "string", "string"]
+    "bullets": ["string — what is happening in the world, no local spin", "string", "string"]
   },
   "home_impact": {
     "headline": "string (global event → local number, e.g. 'Red Sea disruption → +12% grocery price risk this month')",
