@@ -109,6 +109,18 @@ serve(async (req) => {
           continue
         }
 
+        const { data: existing } = await supabase
+          .from('signals')
+          .select('id')
+          .eq('neutral_title', parsed.neutral_title)
+          .limit(1)
+          .single()
+
+        if (existing) {
+          console.log('Duplicate signal, skipping:', parsed.neutral_title)
+          continue
+        }
+
         const { data, error } = await supabase
           .from('signals')
           .insert({
