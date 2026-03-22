@@ -54,7 +54,7 @@ function deduplicateByTags(signals: SignalCard[]): SignalCard[] {
     const tags = (signal.tags || []).map(t => t.toLowerCase())
     const isDupe = seen.some(existing => {
       const shared = tags.filter(t => existing.includes(t))
-      return shared.length >= 2
+      return shared.length >= 3
     })
     if (!isDupe) seen.push(tags)
     return !isDupe

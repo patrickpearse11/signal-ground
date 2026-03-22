@@ -55,7 +55,7 @@ async function callGrokWithWebSearch(existingTitles: string[] = []): Promise<any
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
-          content: `Today is ${today}. Based on your knowledge of current global events, generate 5 signal cards covering the domains listed. Each card must be about a DISTINCT topic from a DIFFERENT region.${avoidClause}\n\nReturn exactly 5 signal cards as a JSON array.`,
+          content: `Today is ${today}. Based on your knowledge of current global events, generate 8 signal cards covering the domains listed. Each card must be about a DISTINCT topic — no two cards may share a region or a domain.${avoidClause}\n\nReturn exactly 8 signal cards as a JSON array.`,
         },
       ],
     }),
@@ -98,7 +98,7 @@ async function callClaudeFallback(existingTitles: string[] = []): Promise<any[]>
       system: SYSTEM_PROMPT,
       messages: [{
         role: 'user',
-        content: `Today is ${today}. Generate 5 global intelligence signal cards. Each must be about a DISTINCT topic from a DIFFERENT region.${avoidClause}\n\nReturn a JSON array.`,
+        content: `Today is ${today}. Generate 8 global intelligence signal cards. Each must be about a DISTINCT topic — no two cards may share a region or a domain.${avoidClause}\n\nReturn a JSON array.`,
       }],
     }),
   })
@@ -130,7 +130,7 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(10)
 
-    if (recent && recent.length >= 3) {
+    if (recent && recent.length >= 5) {
       return new Response(
         JSON.stringify({ success: true, cached: true, count: recent.length, signals: recent }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -169,7 +169,7 @@ serve(async (req) => {
     const results = []
     const insertedTagSets: string[][] = []
 
-    for (const card of cards.slice(0, 5)) {
+    for (const card of cards.slice(0, 8)) {
       if (!card.neutral_title || !card.summary_paragraph) {
         console.warn('Invalid card shape, skipping:', card)
         continue
@@ -188,7 +188,7 @@ serve(async (req) => {
       const lowerCardTags = cardTags.map((t: string) => t.toLowerCase())
       const isDupe = allTagSets.some(existing => {
         const existingLower = existing.map((t: string) => t.toLowerCase())
-        return lowerCardTags.filter(t => existingLower.includes(t)).length >= 2
+        return lowerCardTags.filter(t => existingLower.includes(t)).length >= 3
       })
 
       if (isDupe) {
