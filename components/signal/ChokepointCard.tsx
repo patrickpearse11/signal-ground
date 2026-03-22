@@ -13,11 +13,11 @@ const STATUS_CONFIG = {
   critical:  { label: 'Critical',  color: '#E84C4C', bg: 'rgba(232,76,76,0.2)'   },
 }
 
-const IMPACT_ICONS: Record<string, string> = {
-  prices:  '🛒',
-  fuel:    '⛽',
-  jobs:    '🏗️',
-  imports: '📦',
+const IMPACT_LABELS: Record<string, string> = {
+  prices:  'PRICES',
+  fuel:    'FUEL',
+  jobs:    'JOBS',
+  imports: 'IMPORTS',
 }
 
 export function ChokepointCard({ chokepoint }: Props) {
@@ -27,7 +27,6 @@ export function ChokepointCard({ chokepoint }: Props) {
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <View style={styles.routeLabel}>
-          <Text style={styles.routeIcon}>🚢</Text>
           <Text style={styles.routeName}>{chokepoint.route_name}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
@@ -36,9 +35,11 @@ export function ChokepointCard({ chokepoint }: Props) {
       </View>
 
       <View style={styles.onelineRow}>
-        <Text style={styles.impactIcon}>
-          {IMPACT_ICONS[chokepoint.impact_category] ?? '📊'}
-        </Text>
+        <View style={styles.impactLabel}>
+          <Text style={styles.impactLabelText}>
+            {IMPACT_LABELS[chokepoint.impact_category] ?? 'IMPACT'}
+          </Text>
+        </View>
         <Text style={styles.oneliner}>{chokepoint.grok_oneliner}</Text>
       </View>
 
@@ -78,7 +79,6 @@ const styles = StyleSheet.create({
     gap: 6,
     flex: 1,
   },
-  routeIcon: { fontSize: 16 },
   routeName: {
     fontSize: 15,
     fontWeight: '700',
@@ -105,7 +105,20 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.sm,
   },
-  impactIcon: { fontSize: 14, marginTop: 1 },
+  impactLabel: {
+    backgroundColor: 'rgba(139,143,155,0.15)',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    alignSelf: 'flex-start',
+    marginTop: 1,
+  },
+  impactLabelText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: colors.text.secondary,
+    letterSpacing: 0.8,
+  },
   oneliner: {
     fontSize: 13,
     color: colors.text.primary,

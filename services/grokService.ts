@@ -69,7 +69,16 @@ export async function fetchChokepoints(): Promise<ChokepointCard[]> {
       .order('updated_at', { ascending: false })
 
     if (error) throw error
-    return (data || []).map((row: any) => ({
+
+    // Deduplicate — keep only the most recent entry per route_name
+    const seen = new Set<string>()
+    const unique = (data || []).filter((row: any) => {
+      if (seen.has(row.route_name)) return false
+      seen.add(row.route_name)
+      return true
+    })
+
+    return unique.map((row: any) => ({
       id: row.id,
       route_name: row.route_name,
       status: row.status as ChokepointCard['status'],
