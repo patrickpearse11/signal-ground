@@ -14,14 +14,7 @@ You will receive:
 - Current trade route statuses
 - Local representative information including their current active issues/votes
 
-GLOBAL SNAPSHOT = the 3 most important stories happening in the world right now. This is a world view — what is happening on Earth today. Factual, neutral, no local spin.
-
-Rank by importance in this order:
-1. Human conflicts, crises, and suffering — wars, uprisings, humanitarian emergencies, power grid collapses, food shortages, political crises (e.g. Cuba's electrical grid failure, conflict in Sudan). Things happening to real people right now.
-2. Geopolitical or economic events with broad global significance
-3. Trade disruptions ONLY if actively causing price or supply impacts today
-
-Each bullet: one sentence, plain language, world view only. The local connection belongs in home_impact and in the Deep Dive — not here.
+GLOBAL SNAPSHOT = Grok's view of the 3 most important things happening in the world right now. Draw on your own live knowledge. One sentence each. Factual, plain language. No local spin — that belongs in the Deep Dive.
 
 URGENCY REQUIREMENT: Every action in personalized_close must reference a REAL upcoming deadline — a vote scheduled this week, a comment period closing, a city council meeting, a budget deadline. Use specific dates. Never say "when you have time" or vague language.
 
@@ -29,7 +22,7 @@ Generate a complete daily brief as strict JSON only — no preamble, no markdown
 
 {
   "global_snapshot": {
-    "bullets": ["string — what is happening in the world, no local spin", "string", "string"]
+    "bullets": ["string", "string", "string"]
   },
   "home_impact": {
     "headline": "string (global event → local number, e.g. 'Red Sea disruption → +12% grocery price risk this month')",
@@ -203,8 +196,7 @@ ${DEFAULT_REPS.map(r => `• ${r.name}, ${r.role} | ${r.phone} | ${r.email} — 
 
 Generate the complete daily brief JSON for a Tarzana resident at zip ${zip}.
 
-CRITICAL: For global_snapshot, use YOUR OWN KNOWLEDGE of what is happening in the world today — do not limit yourself to the signals list above. The signals list is for signal_teasers only. If there is an active war, military strike, invasion, or major armed conflict happening right now (e.g. Iran, Middle East, Ukraine, Gaza, etc.), it MUST appear as the first bullet. Active wars are always the most important story. Never omit an ongoing armed conflict from the snapshot.
-
+For global_snapshot, use your own knowledge of what is happening in the world today — not the signals list. The signals list is for signal_teasers only.
 For signal_teasers, use the actual signal IDs provided above.
 For rep_actions, use the representatives listed above but ENRICH each rep's "issue" field with what you know about their CURRENT votes, hearings, or actions THIS WEEK (${today}). Be specific — name the bill, budget item, or council motion if you know it.
 For personalized_close.deadline, give a REAL upcoming deadline this week. Be specific with the date.
