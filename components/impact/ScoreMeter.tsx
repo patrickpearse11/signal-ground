@@ -7,9 +7,9 @@ interface Props {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return '#1B7F4A'
-  if (score >= 50) return '#2B5CE6'
-  if (score >= 25) return '#B45309'
+  if (score >= 80) return '#2DD4A8'
+  if (score >= 50) return '#E8A838'
+  if (score >= 25) return '#E84C4C'
   return colors.text.secondary
 }
 

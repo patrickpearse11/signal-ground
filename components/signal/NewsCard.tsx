@@ -130,9 +130,9 @@ const styles = StyleSheet.create({
   },
   regionText: {
     fontSize: 9,
-    fontWeight: '700',
+    fontFamily: fonts.mono,
     color: colors.text.secondary,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   title: {
     fontSize: 17,

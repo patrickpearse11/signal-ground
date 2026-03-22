@@ -9,9 +9,13 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@expo-google-fonts/dm-sans": "^0.4.2",
+    "@expo-google-fonts/jetbrains-mono": "^0.4.1",
+    "@expo-google-fonts/space-grotesk": "^0.4.1",
     "@expo/vector-icons": "^15.1.1",
     "@supabase/supabase-js": "^2.99.3",
     "expo": "~55.0.8",
+    "expo-font": "^55.0.4",
     "expo-haptics": "~55.0.9",
     "expo-linking": "~55.0.8",
     "expo-router": "~55.0.7",

@@ -7,10 +7,10 @@ interface Props {
 }
 
 const STATUS_CONFIG = {
-  won:     { label: 'WON',     color: '#1B7F4A', bg: '#D6F0E3' },
-  lost:    { label: 'LOST',    color: '#B91C1C', bg: '#FEE2E2' },
-  partial: { label: 'PARTIAL', color: '#B45309', bg: '#FEF3C7' },
-  pending: { label: 'PENDING', color: '#6B7280', bg: '#F3F4F6' },
+  won:     { label: 'WON',     color: '#2DD4A8', bg: 'rgba(45,212,168,0.15)'  },
+  lost:    { label: 'LOST',    color: '#E84C4C', bg: 'rgba(232,76,76,0.15)'   },
+  partial: { label: 'PARTIAL', color: '#E8A838', bg: 'rgba(232,168,56,0.15)'  },
+  pending: { label: 'PENDING', color: '#8A8D9B', bg: 'rgba(138,141,155,0.15)' },
 }
 
 export function OutcomeCard({ outcome }: Props) {

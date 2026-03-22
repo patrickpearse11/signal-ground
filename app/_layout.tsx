@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import { useFonts } from 'expo-font'
+import { SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk'
+import { JetBrainsMono_600SemiBold } from '@expo-google-fonts/jetbrains-mono'
+import { DMSans_400Regular } from '@expo-google-fonts/dm-sans'
 import { initAuth, ensureUserRecord } from '@/services/authService'
 import { useUserStore } from '@/store/userStore'
 
 export default function RootLayout() {
   const { userId, zip, hasOnboarded, setUserId, setIsLoading } = useUserStore()
   const [hydrated, setHydrated] = useState(false)
+
+  const [fontsLoaded] = useFonts({
+    SpaceGrotesk_700Bold,
+    JetBrainsMono_600SemiBold,
+    DMSans_400Regular,
+  })
 
   useEffect(() => {
     const unsub = useUserStore.persist.onFinishHydration(() => setHydrated(true))
@@ -25,11 +35,11 @@ export default function RootLayout() {
     bootstrap()
   }, [hydrated])
 
-  if (!hydrated) return null
+  if (!hydrated || !fontsLoaded) return null
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }}>
         {!hasOnboarded
           ? <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />

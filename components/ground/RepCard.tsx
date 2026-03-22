@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native'
 import { Rep } from '@/types/ground'
-import { colors, spacing, radius } from '@/constants/theme'
+import { colors, spacing, radius, fonts } from '@/constants/theme'
 import { lightTap, mediumTap } from '@/utils/haptics'
 
 interface Props {
@@ -9,9 +9,9 @@ interface Props {
 }
 
 const LEVEL_CONFIG = {
-  local: { label: 'LOCAL', color: '#1B7F4A', bg: '#D6F0E3' },
-  state: { label: 'STATE', color: '#1A2744', bg: '#E8ECF4' },
-  federal: { label: 'FEDERAL', color: '#B45309', bg: '#FEF3C7' },
+  local:   { label: 'LOCAL',   color: '#2DD4A8', bg: 'rgba(45,212,168,0.15)' },
+  state:   { label: 'STATE',   color: '#7B8CDE', bg: 'rgba(123,140,222,0.15)' },
+  federal: { label: 'FEDERAL', color: '#E8A838', bg: 'rgba(232,168,56,0.15)' },
 }
 
 export function RepCard({ rep, currentAction }: Props) {
@@ -150,9 +150,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   levelText: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontSize: 9,
+    fontFamily: fonts.mono,
+    letterSpacing: 0.8,
   },
   role: {
     fontSize: 13,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: '#EBF3FF',
+    backgroundColor: 'rgba(232,168,56,0.08)',
     borderRadius: radius.sm,
     padding: spacing.sm,
     marginBottom: spacing.sm,

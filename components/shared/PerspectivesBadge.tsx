@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native'
-import { colors } from '@/constants/theme'
+import { colors, fonts } from '@/constants/theme'
 
 interface Props {
   perspectives: 'balanced' | 'consensus' | 'divergent'
@@ -29,9 +29,9 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   text: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 9,
+    fontFamily: fonts.mono,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
 })

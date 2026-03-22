@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native'
-import { colors } from '@/constants/theme'
+import { colors, fonts } from '@/constants/theme'
 
 interface Props {
   level: 1 | 2 | 3 | 4 | 5
@@ -47,9 +47,9 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   label: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 9,
+    fontFamily: fonts.mono,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
 })

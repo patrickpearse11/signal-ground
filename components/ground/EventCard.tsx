@@ -11,10 +11,10 @@ interface Props {
 }
 
 const EVENT_TYPE_CONFIG = {
-  meeting: { label: 'Meeting', color: '#1A2744', bg: '#E8ECF4' },
-  town_hall: { label: 'Town Hall', color: '#1B7F4A', bg: '#D6F0E3' },
-  volunteer: { label: 'Volunteer', color: '#B45309', bg: '#FEF3C7' },
-  vote: { label: 'Vote', color: '#B91C1C', bg: '#FEE2E2' },
+  meeting:   { label: 'Meeting',   color: '#7B8CDE', bg: 'rgba(123,140,222,0.15)' },
+  town_hall: { label: 'Town Hall', color: '#2DD4A8', bg: 'rgba(45,212,168,0.15)'  },
+  volunteer: { label: 'Volunteer', color: '#E8A838', bg: 'rgba(232,168,56,0.15)'  },
+  vote:      { label: 'Vote',      color: '#E84C4C', bg: 'rgba(232,76,76,0.15)'   },
 }
 
 function formatDate(dateStr: string): string {

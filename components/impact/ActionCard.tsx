@@ -12,10 +12,10 @@ interface Props {
 }
 
 const ACTION_CONFIG = {
-  event: { label: 'Attend', color: '#1B7F4A', bg: '#D6F0E3' },
-  call: { label: 'Call Rep', color: '#1A2744', bg: '#E8ECF4' },
-  email: { label: 'Email Rep', color: '#0F5E9C', bg: '#E3F0FB' },
-  petition: { label: 'Sign', color: '#B45309', bg: '#FEF3C7' },
+  event:    { label: 'Attend',    color: '#2DD4A8', bg: 'rgba(45,212,168,0.15)'  },
+  call:     { label: 'Call Rep',  color: '#E8A838', bg: 'rgba(232,168,56,0.15)'  },
+  email:    { label: 'Email Rep', color: '#7B8CDE', bg: 'rgba(123,140,222,0.15)' },
+  petition: { label: 'Sign',      color: '#E8A838', bg: 'rgba(232,168,56,0.15)'  },
 }
 
 export function ActionCard({ opportunity, onRSVP }: Props) {

@@ -7,10 +7,10 @@ interface Props {
 }
 
 const STATUS_CONFIG = {
-  clear:     { label: 'Clear',     color: '#1B7F4A', bg: '#D6F0E3' },
-  watch:     { label: 'Watch',     color: '#B45309', bg: '#FEF3C7' },
-  disrupted: { label: 'Disrupted', color: '#B91C1C', bg: '#FEE2E2' },
-  critical:  { label: 'Critical',  color: '#7F1D1D', bg: '#FEE2E2' },
+  clear:     { label: 'Clear',     color: '#2DD4A8', bg: 'rgba(45,212,168,0.15)'  },
+  watch:     { label: 'Watch',     color: '#E8A838', bg: 'rgba(232,168,56,0.15)'  },
+  disrupted: { label: 'Disrupted', color: '#E84C4C', bg: 'rgba(232,76,76,0.15)'  },
+  critical:  { label: 'Critical',  color: '#E84C4C', bg: 'rgba(232,76,76,0.2)'   },
 }
 
 const IMPACT_ICONS: Record<string, string> = {

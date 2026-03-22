@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   soonBadge: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(232,168,56,0.15)',
     borderRadius: 99,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
   soonText: {
     fontSize: 9,
     fontWeight: '700',
-    color: '#B45309',
+    color: '#E8A838',
   },
   content: {
     flex: 1,
