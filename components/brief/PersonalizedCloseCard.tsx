@@ -20,7 +20,6 @@ export function PersonalizedCloseCard({ data }: Props) {
       <Text style={styles.action}>{data.action}</Text>
       {data.deadline ? (
         <View style={styles.deadlineRow}>
-          <Text style={styles.deadlineIcon}>→</Text>
           <Text style={styles.deadlineText}>{data.deadline}</Text>
         </View>
       ) : null}
@@ -76,9 +75,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     marginBottom: spacing.md,
-  },
-  deadlineIcon: {
-    fontSize: 12,
   },
   deadlineText: {
     fontSize: 12,
