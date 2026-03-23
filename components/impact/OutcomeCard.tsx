@@ -44,6 +44,39 @@ export function OutcomeCard({ outcome, userActed = false }: Props) {
 
       <Text style={styles.outcomeText}>{outcome.outcome_text}</Text>
 
+      {(outcome.before_value || outcome.after_value) ? (
+        <View style={styles.dataRow}>
+          <View style={styles.dataItem}>
+            <Text style={styles.dataLabel}>Before</Text>
+            <Text style={styles.dataBefore}>{outcome.before_value}</Text>
+          </View>
+          <Text style={styles.dataArrow}>→</Text>
+          <View style={styles.dataItem}>
+            <Text style={styles.dataLabel}>After</Text>
+            <Text style={[styles.dataAfter, {
+              color: (outcome.change_pct || 0) < 0 ? '#1B7F4A' : '#B91C1C',
+            }]}>{outcome.after_value}</Text>
+          </View>
+          {outcome.change_pct !== undefined && outcome.change_pct !== 0 ? (
+            <View style={[styles.changeBadge, {
+              backgroundColor: (outcome.change_pct || 0) < 0 ? '#D6F0E3' : '#FEE2E2',
+            }]}>
+              <Text style={[styles.changeText, {
+                color: (outcome.change_pct || 0) < 0 ? '#1B7F4A' : '#B91C1C',
+              }]}>
+                {(outcome.change_pct || 0) > 0 ? '+' : ''}{outcome.change_pct}%
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
+      {outcome.verified ? (
+        <View style={styles.verifiedRow}>
+          <Text style={styles.verifiedText}>Verified via DataLA</Text>
+        </View>
+      ) : null}
+
       {outcome.related_issue ? (
         <Text style={styles.relatedIssue}>Re: {outcome.related_issue}</Text>
       ) : null}
@@ -147,4 +180,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2DD4A8',
   },
+  dataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    padding: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  dataItem: { flex: 1 },
+  dataLabel: { fontSize: 10, color: colors.text.secondary, marginBottom: 2, fontWeight: '600' },
+  dataBefore: { fontSize: 14, fontWeight: '600', color: colors.text.secondary },
+  dataAfter: { fontSize: 14, fontWeight: '700' },
+  dataArrow: { fontSize: 16, color: colors.text.secondary },
+  changeBadge: { borderRadius: 99, paddingHorizontal: 8, paddingVertical: 3 },
+  changeText: { fontSize: 12, fontWeight: '700' },
+  verifiedRow: { flexDirection: 'row', alignItems: 'center', paddingBottom: spacing.xs },
+  verifiedText: { fontSize: 11, color: '#1B7F4A', fontWeight: '600' },
 })

@@ -29,6 +29,12 @@ export interface Outcome {
   resident_actions?: number
   zip?: string
   outcome_date: string
+  data_source?: string
+  before_value?: string
+  after_value?: string
+  change_pct?: number
+  dataset_type?: string
+  verified?: boolean
 }
 
 export interface ImpactScore {

@@ -188,6 +188,22 @@ serve(async (req) => {
       .from('trade_routes')
       .select('route_name, status, grok_oneliner')
 
+    // Fetch real 311 count from Socrata for local context
+    let socrataContext = ''
+    try {
+      const thirtyDaysAgo = new Date()
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+      const dateStr = thirtyDaysAgo.toISOString().split('T')[0]
+      const res311 = await fetch(
+        `https://data.lacity.org/resource/pvft-t768.json?$where=createddate>='${dateStr}'&zipcode=${zip}&$select=count(service_request_number)&$limit=1`
+      )
+      const data311 = await res311.json()
+      const count = data311?.[0]?.count_service_request_number || 0
+      if (count > 0) {
+        socrataContext = `REAL LOCAL DATA FOR ZIP ${zip} (last 30 days): ${count} resident 311 service requests filed with the city.`
+      }
+    } catch { /* non-fatal */ }
+
     const userPrompt = `
 TODAY'S DATE: ${today}
 ZIP CODE: ${zip}
@@ -203,6 +219,7 @@ ${DEFAULT_REPS.map(r => `• ${r.name}, ${r.role} | ${r.phone} | ${r.email}`).jo
 
 IMPORTANT: For each rep in rep_actions, enrich their "issue" field with what you know about their CURRENT votes, hearings, or public comment periods THIS WEEK (${today}). Be specific — name the bill, budget item, or council motion. Good: "Voting on Ventura Blvd rezoning April 8". Bad: "Local infrastructure".
 
+${socrataContext ? `${socrataContext}\nWhen generating the Home Impact card, use this real local data to make numbers specific and verifiable rather than estimated.\n` : ''}
 Generate the complete daily brief JSON for a Tarzana resident at zip ${zip}.
 
 For global_snapshot, use your own knowledge of what is happening in the world today — not the signals list. The signals list is for signal_teasers only.

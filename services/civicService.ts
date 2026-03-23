@@ -1,9 +1,42 @@
 import { supabase } from './supabaseClient'
 import { Rep, CouncilMeeting, CivicEvent } from '@/types/ground'
 
-const OPEN_STATES_KEY = process.env.EXPO_PUBLIC_OPEN_STATES_KEY
+// ─────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────
 
-// Default Tarzana/LA reps — always available as fallback
+const CICERO_BASE = 'https://app.cicerodata.com/v3.1'
+const CICERO_USERNAME = process.env.EXPO_PUBLIC_CICERO_USERNAME
+const CICERO_PASSWORD = process.env.EXPO_PUBLIC_CICERO_PASSWORD
+
+// Phone/email lookup for known Tarzana reps — Cicero doesn't return contact info
+const TARZANA_CONTACTS: Record<string, { phone: string; email: string }> = {
+  'blumenfield': { phone: '(818) 756-8501', email: 'councilmember.blumenfield@lacity.org' },
+  'horvath':     { phone: '(213) 974-3333', email: 'Supervisor3@bos.lacounty.gov' },
+  'gabriel':     { phone: '(818) 904-3840', email: 'assemblymember.gabriel@assembly.ca.gov' },
+  'stern':       { phone: '(818) 876-3352', email: 'senator.stern@senate.ca.gov' },
+  'sherman':     { phone: '(818) 501-9200', email: 'https://sherman.house.gov/contact' },
+  'bass':        { phone: '(213) 978-0600', email: 'mayor.feedback@lacity.org' },
+  'padilla':     { phone: '(202) 224-3553', email: 'https://www.padilla.senate.gov/contact/' },
+  'schiff':      { phone: '(202) 224-3841', email: 'https://www.schiff.senate.gov/contact/' },
+}
+
+// District types we care about — elected reps only, no cabinet/exec appointees
+const RELEVANT_DISTRICT_TYPES = [
+  'LOCAL',          // City Council
+  'LOCAL_EXEC',     // Mayor
+  'COUNTY',         // County Board
+  'COUNTY_EXEC',    // County Supervisor
+  'STATE_UPPER',    // State Senate
+  'STATE_LOWER',    // State Assembly
+  'NATIONAL_UPPER', // US Senate
+  'NATIONAL_LOWER', // US House
+]
+
+// ─────────────────────────────────────────
+// HARDCODED FALLBACK — always available
+// ─────────────────────────────────────────
+
 const DEFAULT_TARZANA_REPS: Rep[] = [
   {
     name: 'Bob Blumenfield',
@@ -12,7 +45,8 @@ const DEFAULT_TARZANA_REPS: Rep[] = [
     level: 'local',
     phone: '(818) 756-8501',
     email: 'councilmember.blumenfield@lacity.org',
-    current_issue: 'Neighborhood infrastructure and street safety improvements',
+    current_issue: 'Neighborhood infrastructure and street safety',
+    current_action: '',
     zip: '91356',
   },
   {
@@ -23,6 +57,7 @@ const DEFAULT_TARZANA_REPS: Rep[] = [
     phone: '(213) 974-3333',
     email: 'Supervisor3@bos.lacounty.gov',
     current_issue: 'County mental health services and housing affordability',
+    current_action: '',
     zip: '91356',
   },
   {
@@ -33,6 +68,7 @@ const DEFAULT_TARZANA_REPS: Rep[] = [
     phone: '(818) 904-3840',
     email: 'assemblymember.gabriel@assembly.ca.gov',
     current_issue: 'Education funding and wildfire preparedness',
+    current_action: '',
     zip: '91356',
   },
   {
@@ -42,7 +78,8 @@ const DEFAULT_TARZANA_REPS: Rep[] = [
     level: 'state',
     phone: '(818) 876-3352',
     email: 'senator.stern@senate.ca.gov',
-    current_issue: 'Environmental policy and clean energy transition',
+    current_issue: 'Environmental policy and clean energy',
+    current_action: '',
     zip: '91356',
   },
   {
@@ -53,87 +90,156 @@ const DEFAULT_TARZANA_REPS: Rep[] = [
     phone: '(818) 501-9200',
     email: 'https://sherman.house.gov/contact',
     current_issue: 'Foreign policy and local economic development',
+    current_action: '',
     zip: '91356',
   },
 ]
 
-/**
- * Fetches reps for a zip code.
- * Tries Supabase cache first, then Open States API, then hardcoded defaults.
- */
-export async function fetchRepsByZip(zip: string): Promise<Rep[]> {
-  const cached = await fetchCachedReps(zip)
-  if (cached.length > 0) return cached
+// ─────────────────────────────────────────
+// CICERO TOKEN MANAGEMENT
+// ─────────────────────────────────────────
 
-  if (OPEN_STATES_KEY) {
-    const fromAPI = await fetchRepsFromOpenStates(zip)
-    if (fromAPI.length > 0) {
-      await cacheReps(fromAPI, zip)
-      return fromAPI
+async function getCiceroAuth(): Promise<{ token: string; userId: number } | null> {
+  if (!CICERO_USERNAME || !CICERO_PASSWORD) return null
+
+  try {
+    const { data: cached } = await supabase
+      .from('cicero_tokens')
+      .select('token, user_id, expires_at')
+      .single()
+
+    if (cached && new Date(cached.expires_at) > new Date()) {
+      return { token: cached.token, userId: Number(cached.user_id) }
     }
-  }
 
-  const defaults = DEFAULT_TARZANA_REPS
-  await cacheReps(defaults, zip)
-  return defaults
+    const response = await fetch(`${CICERO_BASE}/token/new.json`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `username=${encodeURIComponent(CICERO_USERNAME)}&password=${encodeURIComponent(CICERO_PASSWORD)}`,
+    })
+
+    if (!response.ok) throw new Error(`Cicero auth error: ${response.status}`)
+    const data = await response.json()
+    if (!data.token) throw new Error('No token in Cicero response')
+
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    tomorrow.setUTCHours(23, 59, 59, 0)
+
+    await supabase.from('cicero_tokens').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabase.from('cicero_tokens').insert({
+      token: data.token,
+      user_id: String(data.user),
+      expires_at: tomorrow.toISOString(),
+    })
+
+    return { token: data.token, userId: data.user }
+  } catch (err) {
+    console.warn('[Cicero] getCiceroAuth failed:', err)
+    return null
+  }
 }
 
-async function fetchRepsFromOpenStates(zip: string): Promise<Rep[]> {
-  try {
-    const response = await fetch(
-      `https://v3.openstates.org/people.geo?lat=34.1683&lng=-118.5617&include=links&apikey=${OPEN_STATES_KEY}`,
-      { headers: { 'X-API-KEY': OPEN_STATES_KEY! } }
-    )
-    if (!response.ok) throw new Error(`Open States error: ${response.status}`)
-    const data = await response.json()
+// ─────────────────────────────────────────
+// CICERO REP LOOKUP
+// ─────────────────────────────────────────
 
-    return (data.results || []).map((p: any) => ({
-      name: p.name,
-      role: p.current_role?.title || 'Representative',
-      district: p.current_role?.district || '',
-      level: mapJurisdictionLevel(p.jurisdiction?.classification),
-      phone: p.links?.find((l: any) => l.url?.includes('tel:'))?.url?.replace('tel:', '') || '',
-      email: p.email || '',
-      current_issue: '',
-      zip,
-    }))
+async function fetchRepsFromCicero(zip: string): Promise<Rep[]> {
+  const auth = await getCiceroAuth()
+  if (!auth) return []
+
+  try {
+    // Cicero requires a full address for geocoding — use a known Tarzana address
+    const address = zip === '91356'
+      ? '5655 Reseda Blvd, Tarzana, CA 91356'
+      : `${zip}, CA`
+
+    const url = `${CICERO_BASE}/official?search_loc=${encodeURIComponent(address)}&user=${auth.userId}&token=${auth.token}`
+
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`Cicero lookup error: ${response.status}`)
+
+    const data = await response.json()
+    const officials: any[] = data?.response?.results?.candidates?.[0]?.officials || []
+
+    const now = new Date()
+
+    return officials
+      .filter((o: any) => {
+        // Must be currently active
+        if (!o.valid_from) return false
+        if (o.valid_to && new Date(o.valid_to) < now) return false
+        // Must be a relevant district type
+        const dt = o.office?.district?.district_type || ''
+        return RELEVANT_DISTRICT_TYPES.includes(dt)
+      })
+      .map((o: any) => {
+        const rep = mapCiceroOfficial(o, zip)
+        // Fill in phone/email from hardcoded defaults if Cicero doesn't have them
+        const fallback = DEFAULT_TARZANA_REPS.find(d =>
+          d.name.toLowerCase() === rep.name.toLowerCase()
+        )
+        if (fallback) {
+          rep.phone = rep.phone || fallback.phone
+          rep.email = rep.email || fallback.email
+          rep.current_issue = fallback.current_issue
+        }
+        return rep
+      })
+      .filter((r: Rep) => r.name)
+      // Sort: local first, state, federal
+      .sort((a, b) => {
+        const order = { local: 0, state: 1, federal: 2 }
+        return order[a.level] - order[b.level]
+      })
   } catch (err) {
-    console.warn('Open States API failed:', err)
+    console.warn('fetchRepsFromCicero failed:', err)
     return []
   }
 }
 
-function mapJurisdictionLevel(classification: string): Rep['level'] {
-  if (classification === 'government') return 'federal'
-  if (classification === 'legislature') return 'state'
-  return 'local'
+function mapCiceroOfficial(o: any, zip: string): Rep {
+  const districtType: string = o.office?.district?.district_type || ''
+
+  const level: Rep['level'] =
+    districtType.startsWith('NATIONAL') ? 'federal'
+    : districtType.startsWith('STATE') ? 'state'
+    : 'local'
+
+  const lastName = o.last_name?.toLowerCase() || ''
+  const contacts = TARZANA_CONTACTS[lastName] ?? { phone: '', email: '' }
+
+  return {
+    name: `${o.first_name} ${o.last_name}`.trim(),
+    role: o.office?.title || 'Representative',
+    district: o.office?.district?.label || o.office?.district?.district_id || '',
+    level,
+    phone: contacts.phone,
+    email: contacts.email,
+    current_issue: '',
+    current_action: '',
+    zip,
+  }
 }
+
+// ─────────────────────────────────────────
+// SUPABASE CACHE
+// ─────────────────────────────────────────
 
 async function fetchCachedReps(zip: string): Promise<Rep[]> {
   try {
-    const { data: withDate, error } = await supabase
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+    const { data, error } = await supabase
       .from('ground_data')
       .select('content_json, updated_at')
       .eq('type', 'rep')
       .eq('zip', zip)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (error || !withDate) return []
-
-    const ageMs = Date.now() - new Date(withDate.updated_at).getTime()
-    const sevenDays = 7 * 24 * 60 * 60 * 1000
-    if (ageMs > sevenDays) return []
-
-    const { data, error: allError } = await supabase
-      .from('ground_data')
-      .select('content_json')
-      .eq('type', 'rep')
-      .eq('zip', zip)
+      .gte('updated_at', sevenDaysAgo.toISOString())
       .order('updated_at', { ascending: false })
 
-    if (allError || !data?.length) return []
+    if (error || !data?.length) return []
     return data.map((row: any) => row.content_json as Rep)
   } catch (err) {
     console.warn('fetchCachedReps failed:', err)
@@ -143,23 +249,43 @@ async function fetchCachedReps(zip: string): Promise<Rep[]> {
 
 async function cacheReps(reps: Rep[], zip: string): Promise<void> {
   try {
-    await supabase
-      .from('ground_data')
-      .delete()
-      .eq('type', 'rep')
-      .eq('zip', zip)
-
+    await supabase.from('ground_data').delete().eq('type', 'rep').eq('zip', zip)
     const rows = reps.map(rep => ({
       type: 'rep',
       content_json: rep,
       zip,
+      updated_at: new Date().toISOString(),
     }))
-
     await supabase.from('ground_data').insert(rows)
   } catch (err) {
     console.warn('cacheReps failed:', err)
   }
 }
+
+// ─────────────────────────────────────────
+// MAIN EXPORT — fetchRepsByZip
+// ─────────────────────────────────────────
+
+export async function fetchRepsByZip(zip: string): Promise<Rep[]> {
+  // Layer 1: Supabase cache (7-day freshness)
+  const cached = await fetchCachedReps(zip)
+  if (cached.length > 0) return cached
+
+  // Layer 2: Cicero API
+  const reps = await fetchRepsFromCicero(zip)
+  if (reps.length > 0) {
+    await cacheReps(reps, zip)
+    return reps
+  }
+
+  // Layer 3: Hardcoded Tarzana defaults
+  await cacheReps(DEFAULT_TARZANA_REPS, zip)
+  return DEFAULT_TARZANA_REPS
+}
+
+// ─────────────────────────────────────────
+// COUNCIL MEETINGS & EVENTS (unchanged)
+// ─────────────────────────────────────────
 
 export async function fetchCouncilMeetings(zip: string): Promise<CouncilMeeting[]> {
   try {
