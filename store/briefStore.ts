@@ -7,7 +7,7 @@ interface BriefState {
   error: string | null
   lastLoadedDate: string | null
 
-  setBrief: (brief: Brief) => void
+  setBrief: (brief: Brief | null) => void
   setIsLoading: (value: boolean) => void
   setError: (error: string | null) => void
   setLastLoadedDate: (date: string) => void

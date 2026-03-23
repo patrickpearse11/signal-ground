@@ -21,6 +21,8 @@ export default function BriefScreen() {
 
   const loadBrief = useCallback(async (refresh = false) => {
     if (!userId) return
+    const today = new Date().toISOString().split('T')[0]
+    if (brief && brief.date !== today) setBrief(null)
     setIsLoading(true)
     setError(null)
 
