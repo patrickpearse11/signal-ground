@@ -1,26 +1,21 @@
 import { useEffect, useCallback, useMemo, useState } from 'react'
-import {
-  View, Text, FlatList, RefreshControl,
-  StyleSheet, TouchableOpacity
-} from 'react-native'
+import { View, Text, FlatList, RefreshControl, StyleSheet, TouchableOpacity } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { NewsCard } from '@/components/signal/NewsCard'
-import { ChokepointCard } from '@/components/signal/ChokepointCard'
-import { FeedFilterToggle } from '@/components/signal/FeedFilterToggle'
+import { TradeCard } from '@/components/signal/TradeCard'
+import { TradeFilterBar } from '@/components/signal/TradeFilterBar'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { Toast } from '@/components/shared/Toast'
 import { useFeedStore } from '@/store/feedStore'
-import { fetchLatestSignals, generateSignals, fetchChokepoints } from '@/services/grokService'
+import { fetchLatestSignals, generateSignals, fetchTradeCards } from '@/services/grokService'
 import { colors, spacing } from '@/constants/theme'
 import { FeedItem, SignalCard } from '@/types/signal'
 
-const REFRESH_COOLDOWN_MS = 15 * 60 * 1000
-
 export default function SignalScreen() {
   const {
-    signals, chokepoints, isLoading, isRefreshing,
+    signals, tradeCards, isLoading, isRefreshing,
     lastUpdated, error, feedFilter,
-    setSignals, setChokepoints, setIsLoading, setIsRefreshing,
+    setSignals, setTradeCards, setIsLoading, setIsRefreshing,
     setLastUpdated, setError, setFeedFilter,
   } = useFeedStore()
   const [toast, setToast] = useState({ visible: false, message: '' })
@@ -31,17 +26,16 @@ export default function SignalScreen() {
     setError(null)
 
     try {
-      const [cached, chokepointData] = await Promise.all([
+      const [cached, freshTradeCards] = await Promise.all([
         fetchLatestSignals(20),
-        fetchChokepoints(),
+        fetchTradeCards(),
       ])
 
       if (cached.length > 0) setSignals(cached)
-      if (chokepointData.length > 0) setChokepoints(chokepointData)
+      if (freshTradeCards.length > 0) setTradeCards(freshTradeCards)
       setLastUpdated(new Date())
 
-      const cooldownPassed = !lastUpdated || Date.now() - lastUpdated.getTime() > REFRESH_COOLDOWN_MS
-      if ((refresh && cooldownPassed) || cached.length === 0) {
+      if (refresh || cached.length === 0) {
         const fresh = await generateSignals()
         if (fresh.length > 0) {
           const updated = await fetchLatestSignals(20)
@@ -55,23 +49,47 @@ export default function SignalScreen() {
       setIsLoading(false)
       setIsRefreshing(false)
     }
-  }, [lastUpdated])
+  }, [])
 
   useEffect(() => { loadFeed() }, [])
 
   const feedItems: FeedItem[] = useMemo(() => {
-    if (feedFilter === 'chokepoints') {
-      return chokepoints.map((c) => ({ type: 'chokepoint' as const, data: c }))
+    if (feedFilter === 'trade') {
+      return tradeCards.map(c => ({ type: 'trade' as const, data: c }))
     }
+
+    if (feedFilter === 'conflicts') {
+      return signals
+        .filter(s =>
+          s.tags?.some(t =>
+            ['conflict', 'military', 'geopolitical', 'war', 'sanctions', 'security'].includes(t.toLowerCase())
+          ) || ['Middle East', 'Asia-Pacific', 'Europe'].includes(s.source_region || '')
+        )
+        .map(s => ({ type: 'signal' as const, data: s }))
+    }
+
+    if (feedFilter === 'energy') {
+      const energyTrade = tradeCards
+        .filter(c => c.category === 'commodities' || c.category === 'maritime')
+        .map(c => ({ type: 'trade' as const, data: c }))
+      const energySignals = signals
+        .filter(s => s.tags?.some(t =>
+          ['oil', 'gas', 'energy', 'opec', 'fuel', 'petroleum'].includes(t.toLowerCase())
+        ))
+        .map(s => ({ type: 'signal' as const, data: s }))
+      return [...energyTrade, ...energySignals]
+    }
+
+    // 'all' — interleave trade cards every 3 signals
     const items: FeedItem[] = []
     signals.forEach((s, i) => {
       items.push({ type: 'signal' as const, data: s })
-      if ((i + 1) % 4 === 0 && chokepoints[Math.floor(i / 4)]) {
-        items.push({ type: 'chokepoint' as const, data: chokepoints[Math.floor(i / 4)] })
+      if ((i + 1) % 3 === 0 && tradeCards[Math.floor(i / 3)]) {
+        items.push({ type: 'trade' as const, data: tradeCards[Math.floor(i / 3)] })
       }
     })
     return items
-  }, [signals, chokepoints, feedFilter])
+  }, [signals, tradeCards, feedFilter])
 
   function handleSaveToImpact(signal: SignalCard) {
     setToast({ visible: true, message: 'Saved to Impact' })
@@ -82,9 +100,9 @@ export default function SignalScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Signal</Text>
-          <Text style={styles.headerSub}>Civic intelligence feed</Text>
+          <Text style={styles.headerSub}>Global intelligence feed</Text>
         </View>
-        <FeedFilterToggle value={feedFilter} onChange={setFeedFilter} />
+        <TradeFilterBar value={feedFilter} onChange={setFeedFilter} />
         {[1, 2, 3].map((i) => <SkeletonCard key={i} variant="news" />)}
       </SafeAreaView>
     )
@@ -113,12 +131,12 @@ export default function SignalScreen() {
         keyExtractor={(item) =>
           item.type === 'signal'
             ? (item.data.id ?? item.data.neutral_title)
-            : (item.data.id ?? item.data.route_name)
+            : (item.data.id ?? item.data.title)
         }
         renderItem={({ item }) =>
           item.type === 'signal'
             ? <NewsCard signal={item.data} onSaveToImpact={handleSaveToImpact} />
-            : <ChokepointCard chokepoint={item.data} />
+            : <TradeCard card={item.data} />
         }
         ListHeaderComponent={
           <View>
@@ -127,17 +145,19 @@ export default function SignalScreen() {
               <Text style={styles.headerSub}>
                 {lastUpdated
                   ? `Updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                  : 'Civic intelligence feed'}
+                  : 'Global intelligence feed'}
               </Text>
             </View>
-            <FeedFilterToggle value={feedFilter} onChange={setFeedFilter} />
+            <TradeFilterBar
+              value={feedFilter}
+              onChange={setFeedFilter}
+              tradeCount={tradeCards.length}
+            />
           </View>
         }
         ListEmptyComponent={
           <View style={styles.centerState}>
-            <Text style={styles.emptyText}>
-              {feedFilter === 'chokepoints' ? 'No chokepoint data yet' : 'No signals yet'}
-            </Text>
+            <Text style={styles.emptyText}>No signals yet</Text>
             <Text style={styles.emptySubText}>Pull down to refresh</Text>
           </View>
         }
@@ -185,7 +205,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   emptyText: { fontSize: 16, fontWeight: '600', color: colors.text.primary, marginBottom: spacing.sm },
-  emptySubText: { fontSize: 14, color: colors.text.secondary, textAlign: 'center' },
+  emptySubText: { fontSize: 14, color: colors.text.secondary },
   retryBtn: {
     borderWidth: 1,
     borderColor: colors.text.accent,

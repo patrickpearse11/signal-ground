@@ -34,7 +34,7 @@ export default function ImpactScreen() {
         fetchActionOpportunities(userId, zip),
         fetchCommunityRipple(zip),
         fetchPersonalScore(userId),
-        fetchOutcomes(),
+        fetchOutcomes(zip),
       ])
       setOpportunities(ops)
       setRipple(communityRipple)
@@ -147,7 +147,7 @@ export default function ImpactScreen() {
             </View>
             <View style={styles.sectionContent}>
               {outcomes.map((outcome, i) => (
-                <OutcomeCard key={outcome.id ?? i} outcome={outcome} />
+                <OutcomeCard key={outcome.id ?? i} outcome={outcome} userActed={i === 0} />
               ))}
             </View>
             <View style={styles.divider} />

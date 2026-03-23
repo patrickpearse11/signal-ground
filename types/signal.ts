@@ -21,16 +21,28 @@ export interface RawHeadline {
   publishedAt: string
 }
 
-export interface ChokepointCard {
+export type TradeCategory =
+  | 'maritime'
+  | 'tariffs'
+  | 'commodities'
+  | 'supply_chain'
+  | 'monetary'
+
+export type TradeSeverity = 'clear' | 'watch' | 'disrupted' | 'critical'
+
+export interface TradeCard {
   id?: string
-  route_name: string
-  status: 'clear' | 'disrupted' | 'watch' | 'critical'
-  grok_oneliner: string
-  region: string
-  impact_category: 'prices' | 'fuel' | 'jobs' | 'imports'
+  title: string
+  category: TradeCategory
+  severity: TradeSeverity
+  summary: string
+  tarzana_impact: string
+  impact_detail: string
+  tags: string[]
+  route_name?: string
   updated_at?: string
 }
 
 export type FeedItem =
   | { type: 'signal'; data: SignalCard }
-  | { type: 'chokepoint'; data: ChokepointCard }
+  | { type: 'trade'; data: TradeCard }

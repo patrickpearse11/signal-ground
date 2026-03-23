@@ -10,28 +10,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SYSTEM_PROMPT = `You generate individual global news articles for a civic intelligence feed. Each card is one story — what matters most in the world right now.
+const SIGNAL_SYSTEM_PROMPT = `You are the global intelligence analyst for Signal + Ground, a civic app for residents of Tarzana, Los Angeles (zip 91356).
 
-Cover the most important stories happening globally. Wars, conflicts, political crises, humanitarian emergencies, elections, protests, government collapses, natural disasters, and major human events come first. Economic and trade stories only if they are among the top stories of the day.
+YOUR MISSION:
+Find today's most impactful global stories. For each story, answer one question: "How does this affect a Tarzana resident's daily life — their wallet, their commute, their job, their safety, their cost of living?"
 
-For each story:
-- "neutral_title": a clear, plain-language headline (max 12 words)
-- "summary_paragraph": 2-3 sentences. Write like a journalist — specific, factual, human. Name places, leaders, numbers where known. What happened, who is involved, why it matters.
-- "perspectives": "balanced" | "consensus" | "divergent"
-- "local_impact": one sentence on how this story directly touches people in Tarzana or Los Angeles — family in affected countries, gas prices, jobs, safety, immigration, community impact
-- "tags": 2-4 topic tags
-- "escalation_level": 1 (low) to 5 (critical)
-- "source_region": region where the story originates
-- "sources": 1-3 real outlets covering this story (Reuters, AP, BBC, Al Jazeera, NYT, WSJ, Financial Times, etc.)
+STORY CATEGORIES TO COVER (cover as many as possible):
+- Geopolitical conflicts and military tensions (Middle East, Iran, China/Taiwan, Russia/Ukraine, any active conflict)
+- Global trade chokepoints (Strait of Hormuz, Suez Canal/Red Sea, Panama Canal, Strait of Malacca)
+- Energy and oil markets (OPEC decisions, refinery issues, supply disruptions)
+- Supply chain disruptions (port closures, shipping delays, manufacturing shutdowns)
+- Central bank decisions (Federal Reserve, ECB — interest rates, inflation)
+- Food and commodity prices (wheat, corn, oil, semiconductor shortages)
+- Climate events with economic impact (droughts, floods, wildfires affecting supply chains)
+- US trade policy (tariffs, sanctions, trade agreements)
 
-Output a strict JSON array of exactly 8 objects. No preamble, no markdown. Just the raw JSON array.`
+TARZANA LOCAL LENS — always connect each story to one of:
+- Grocery prices (imports via Port of LA)
+- Gas prices (Ventura Blvd stations, LA basin)
+- Housing costs (lumber, materials, interest rates)
+- Job market (warehouse jobs, port jobs, tech sector)
+- Consumer goods prices (electronics, appliances, clothing)
+- Utilities and energy costs
 
-async function callGrokWithWebSearch(existingTitles: string[] = []): Promise<any[]> {
-  const today = new Date().toISOString().split('T')[0]
-  const avoidClause = existingTitles.length > 0
-    ? `\n\nDo NOT generate stories about topics already covered today:\n${existingTitles.map(t => `- ${t}`).join('\n')}\n\nChoose entirely different stories.`
-    : ''
+STRICT RULES:
+- Return exactly 5 stories from at least 4 different categories — never 2 on the same topic
+- Prioritize stories breaking in the last 24 hours
+- Prefer stories with a specific number: "+$0.15/gallon", "+8-12% on electronics"
+- Calm, fact-only analyst voice — never alarmist or partisan
+- escalation_level = LOCAL impact severity (not global newsworthiness)
+  - 1-2: Background trend, minimal Tarzana impact
+  - 3: Noticeable impact coming — residents should be aware
+  - 4: Significant impact already happening or imminent
+  - 5: Major disruption directly hitting Tarzana residents now
+- For geopolitical stories always include at least one of: conflict, military, geopolitical, sanctions, security
+- For energy stories always include at least one of: oil, gas, energy, opec, fuel, petroleum
 
+Output a JSON array of exactly 5 signal cards. No preamble, no markdown:
+[
+  {
+    "neutral_title": "string (fact-only, max 12 words)",
+    "summary_paragraph": "string (3 sentences: what happened, global context, why it matters)",
+    "perspectives": "balanced" | "consensus" | "divergent",
+    "local_impact": "string (1 sentence, specific to Tarzana/LA, include a number if possible)",
+    "tags": ["string"],
+    "escalation_level": 1 | 2 | 3 | 4 | 5,
+    "source_region": "string (e.g. Middle East, Asia-Pacific, Domestic, Europe)"
+  }
+]`
+
+async function generateSignalsWithGrok(today: string): Promise<any[]> {
   const response = await fetch('https://api.x.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -40,41 +68,30 @@ async function callGrokWithWebSearch(existingTitles: string[] = []): Promise<any
     },
     body: JSON.stringify({
       model: 'grok-3',
-      temperature: 0.3,
+      temperature: 0.2,
       max_tokens: 3000,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: SIGNAL_SYSTEM_PROMPT },
         {
           role: 'user',
-          content: `Today is ${today}. Based on your knowledge of current global events, generate 8 signal cards covering the domains listed. Each card must be about a DISTINCT topic — no two cards may share a region or a domain.${avoidClause}\n\nReturn exactly 8 signal cards as a JSON array.`,
+          content: `Today is ${today}. Based on your knowledge of current global events, generate 5 high-impact global signal cards for Tarzana residents. Cover geopolitical conflicts, energy markets, supply chains, and economic policy. Return only the JSON array.`,
         },
       ],
     }),
   })
 
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`Grok error ${response.status}: ${text}`)
-  }
-
+  if (!response.ok) throw new Error(`Grok error: ${response.status}`)
   const data = await response.json()
   const content = data.choices?.[0]?.message?.content
   if (!content) throw new Error('Empty Grok response')
-
   const clean = content.replace(/```json\n?|\n?```/g, '').trim()
   const parsed = JSON.parse(clean)
-  if (!Array.isArray(parsed)) throw new Error('Grok did not return an array')
-  return parsed
+  return Array.isArray(parsed) ? parsed : [parsed]
 }
 
-async function callClaudeFallback(existingTitles: string[] = []): Promise<any[]> {
+async function generateSignalsFallback(today: string): Promise<any[]> {
   const ANTHROPIC_KEY = Deno.env.get('ANTHROPIC_API_KEY')
-  if (!ANTHROPIC_KEY) throw new Error('No fallback API key available')
-
-  const today = new Date().toISOString().split('T')[0]
-  const avoidClause = existingTitles.length > 0
-    ? `\n\nDo NOT generate stories about topics already covered today:\n${existingTitles.map(t => `- ${t}`).join('\n')}\n\nChoose entirely different stories.`
-    : ''
+  if (!ANTHROPIC_KEY) throw new Error('No fallback key')
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -86,135 +103,80 @@ async function callClaudeFallback(existingTitles: string[] = []): Promise<any[]>
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 3000,
-      system: SYSTEM_PROMPT,
+      system: SIGNAL_SYSTEM_PROMPT,
       messages: [{
         role: 'user',
-        content: `Today is ${today}. Generate 8 global intelligence signal cards. Each must be about a DISTINCT topic — no two cards may share a region or a domain.${avoidClause}\n\nReturn a JSON array.`,
+        content: `Today is ${today}. Generate 5 high-impact global signal cards for Tarzana residents. Return only the JSON array.`,
       }],
     }),
   })
 
-  if (!response.ok) throw new Error(`Claude fallback error: ${response.status}`)
+  if (!response.ok) throw new Error(`Claude error: ${response.status}`)
   const data = await response.json()
   const content = data.content?.[0]?.text
-  if (!content) throw new Error('Empty Claude response')
   const clean = content.replace(/```json\n?|\n?```/g, '').trim()
   const parsed = JSON.parse(clean)
-  if (!Array.isArray(parsed)) throw new Error('Claude did not return an array')
-  return parsed
+  return Array.isArray(parsed) ? parsed : [parsed]
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
-  }
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
   try {
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_KEY!)
+    const today = new Date().toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    })
 
     // Cache check — skip generation if signals exist from last 15 minutes
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString()
     const { data: recent } = await supabase
       .from('signals')
       .select('*')
-      .gte('created_at', fifteenMinutesAgo)
+      .gte('created_at', fifteenMinsAgo)
       .order('created_at', { ascending: false })
-      .limit(10)
+      .limit(8)
 
-    if (recent && recent.length >= 5) {
+    if (recent && recent.length >= 4) {
       return new Response(
-        JSON.stringify({ success: true, cached: true, count: recent.length, signals: recent }),
+        JSON.stringify({ success: true, signals: recent, cached: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Fetch existing signals from last 24h to avoid topic overlap
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-    const { data: recentSignals } = await supabase
-      .from('signals')
-      .select('neutral_title, tags')
-      .gte('created_at', oneDayAgo)
-
-    const existingTitles = (recentSignals || []).map((s: any) => s.neutral_title)
-    const existingTagSets: string[][] = (recentSignals || []).map((s: any) => s.tags || [])
-
-    // Fetch fresh signals, passing existing topics to avoid redundancy
-    let cards: any[]
+    let signals: any[] = []
     try {
-      cards = await callGrokWithWebSearch(existingTitles)
+      signals = await generateSignalsWithGrok(today)
     } catch (err) {
       console.warn('Grok failed, trying Claude fallback:', err)
-      cards = await callClaudeFallback(existingTitles)
-    }
-
-    // Dedup helper — returns true if card shares 2+ tags with any existing signal
-    function hasTagOverlap(cardTags: string[]): boolean {
-      const lower = cardTags.map((t: string) => t.toLowerCase())
-      return existingTagSets.some(existing => {
-        const existingLower = existing.map((t: string) => t.toLowerCase())
-        const shared = lower.filter(t => existingLower.includes(t))
-        return shared.length >= 2
-      })
+      signals = await generateSignalsFallback(today)
     }
 
     const results = []
-    const insertedTagSets: string[][] = []
-
-    for (const card of cards.slice(0, 8)) {
-      if (!card.neutral_title || !card.summary_paragraph) {
-        console.warn('Invalid card shape, skipping:', card)
-        continue
-      }
-
-      const cardTags: string[] = card.tags || []
-
-      // Skip if title already exists
-      if (existingTitles.includes(card.neutral_title)) {
-        console.log('Duplicate title, skipping:', card.neutral_title)
-        continue
-      }
-
-      // Skip if topic already covered (2+ tag overlap with existing OR already inserted this run)
-      const allTagSets = [...existingTagSets, ...insertedTagSets]
-      const lowerCardTags = cardTags.map((t: string) => t.toLowerCase())
-      const isDupe = allTagSets.some(existing => {
-        const existingLower = existing.map((t: string) => t.toLowerCase())
-        return lowerCardTags.filter(t => existingLower.includes(t)).length >= 3
-      })
-
-      if (isDupe) {
-        console.log('Topic overlap, skipping:', card.neutral_title)
-        continue
-      }
-
+    for (const signal of signals) {
+      if (!signal.neutral_title) continue
       const { data, error } = await supabase
         .from('signals')
         .insert({
-          neutral_title: card.neutral_title,
-          summary_paragraph: card.summary_paragraph,
-          perspectives: card.perspectives || 'balanced',
-          local_impact: card.local_impact || '',
-          tags: cardTags,
-          escalation_level: card.escalation_level || 1,
-          source_region: card.source_region || 'Global',
-          sources: card.sources || [],
+          neutral_title: signal.neutral_title,
+          summary_paragraph: signal.summary_paragraph,
+          perspectives: signal.perspectives || 'balanced',
+          local_impact: signal.local_impact || '',
+          tags: signal.tags || [],
+          escalation_level: signal.escalation_level || 2,
+          source_region: signal.source_region || 'Global',
+          sources: signal.sources || [],
         })
         .select()
         .single()
 
-      if (error) {
-        console.warn('Supabase insert error:', error)
-      } else {
-        results.push(data)
-        insertedTagSets.push(cardTags)
-      }
+      if (!error && data) results.push(data)
     }
 
     return new Response(
-      JSON.stringify({ success: true, cached: false, count: results.length, signals: results }),
+      JSON.stringify({ success: true, count: results.length, signals: results, cached: false }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
-
   } catch (err) {
     console.error('Edge function error:', err)
     return new Response(

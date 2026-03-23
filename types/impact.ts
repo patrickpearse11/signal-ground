@@ -22,11 +22,13 @@ export interface CommunityRipple {
 export interface Outcome {
   id?: string
   rep_name: string
-  action_taken: string  // what residents did (e.g. "47 calls made")
-  result: string        // what happened (e.g. "Council voted 12–3 in favor")
-  status: 'won' | 'lost' | 'pending' | 'partial'
-  date: string          // YYYY-MM-DD
-  signal_title?: string // linked signal, if any
+  rep_role?: string
+  action_type?: string
+  outcome_text: string
+  related_issue?: string
+  resident_actions?: number
+  zip?: string
+  outcome_date: string
 }
 
 export interface ImpactScore {

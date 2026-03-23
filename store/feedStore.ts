@@ -1,28 +1,29 @@
 import { create } from 'zustand'
-import { SignalCard, ChokepointCard } from '@/types/signal'
+import { SignalCard, TradeCard } from '@/types/signal'
+import { FeedFilter } from '@/components/signal/TradeFilterBar'
 
 interface FeedState {
   signals: SignalCard[]
-  chokepoints: ChokepointCard[]
+  tradeCards: TradeCard[]
   isLoading: boolean
   isRefreshing: boolean
   lastUpdated: Date | null
   error: string | null
-  feedFilter: 'all' | 'chokepoints'
+  feedFilter: FeedFilter
 
   setSignals: (signals: SignalCard[]) => void
   appendSignals: (signals: SignalCard[]) => void
-  setChokepoints: (chokepoints: ChokepointCard[]) => void
+  setTradeCards: (cards: TradeCard[]) => void
   setIsLoading: (value: boolean) => void
   setIsRefreshing: (value: boolean) => void
   setLastUpdated: (date: Date) => void
   setError: (error: string | null) => void
-  setFeedFilter: (filter: 'all' | 'chokepoints') => void
+  setFeedFilter: (filter: FeedFilter) => void
 }
 
 export const useFeedStore = create<FeedState>((set) => ({
   signals: [],
-  chokepoints: [],
+  tradeCards: [],
   isLoading: false,
   isRefreshing: false,
   lastUpdated: null,
@@ -31,7 +32,7 @@ export const useFeedStore = create<FeedState>((set) => ({
 
   setSignals: (signals) => set({ signals }),
   appendSignals: (signals) => set((state) => ({ signals: [...state.signals, ...signals] })),
-  setChokepoints: (chokepoints) => set({ chokepoints }),
+  setTradeCards: (tradeCards) => set({ tradeCards }),
   setIsLoading: (value) => set({ isLoading: value }),
   setIsRefreshing: (value) => set({ isRefreshing: value }),
   setLastUpdated: (date) => set({ lastUpdated: date }),

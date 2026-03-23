@@ -164,23 +164,30 @@ export async function fetchPersonalScore(userId: string): Promise<ImpactScore> {
   }
 }
 
-export async function fetchOutcomes(): Promise<Outcome[]> {
+export async function fetchOutcomes(zip = '91356'): Promise<Outcome[]> {
   try {
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
     const { data, error } = await supabase
       .from('outcomes')
       .select('*')
-      .order('date', { ascending: false })
-      .limit(10)
+      .eq('zip', zip)
+      .gte('outcome_date', thirtyDaysAgo.toISOString().split('T')[0])
+      .order('outcome_date', { ascending: false })
+      .limit(5)
 
     if (error) throw error
     return (data || []).map((row: any) => ({
       id: row.id,
       rep_name: row.rep_name,
-      action_taken: row.action_taken,
-      result: row.result,
-      status: row.status as Outcome['status'],
-      date: row.date,
-      signal_title: row.signal_title || undefined,
+      rep_role: row.rep_role || undefined,
+      action_type: row.action_type || undefined,
+      outcome_text: row.outcome_text,
+      related_issue: row.related_issue || undefined,
+      resident_actions: row.resident_actions ?? 0,
+      zip: row.zip,
+      outcome_date: row.outcome_date,
     }))
   } catch (err) {
     console.warn('fetchOutcomes failed:', err)
