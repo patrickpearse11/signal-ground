@@ -1,19 +1,22 @@
 import { useEffect, useCallback, useState } from 'react'
 import {
   View, Text, ScrollView, RefreshControl,
-  StyleSheet, TouchableOpacity
+  StyleSheet, TouchableOpacity, Linking
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { RepCard } from '@/components/ground/RepCard'
 import { CouncilMeetingCard } from '@/components/ground/CouncilMeetingCard'
 import { EventCard } from '@/components/ground/EventCard'
 import { EventFilterPills } from '@/components/ground/EventFilterPills'
+import { ServiceRequests311Card } from '@/components/ground/ServiceRequests311Card'
+import { PermitActivityCard } from '@/components/ground/PermitActivityCard'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
 import { useGroundStore } from '@/store/groundStore'
 import { useUserStore } from '@/store/userStore'
 import { useBriefStore } from '@/store/briefStore'
 import { fetchRepsByZip, fetchCouncilMeetings, fetchCivicEvents } from '@/services/civicService'
-import { colors, spacing } from '@/constants/theme'
+import { fetchNeighborhoodPulse, NeighborhoodPulse } from '@/services/socrataService'
+import { colors, spacing, radius } from '@/constants/theme'
 import { CivicEvent } from '@/types/ground'
 
 type EventFilter = 'all' | CivicEvent['event_type']
@@ -25,19 +28,22 @@ export default function GroundScreen() {
   const { zip } = useUserStore()
   const { brief } = useBriefStore()
   const [eventFilter, setEventFilter] = useState<EventFilter>('all')
+  const [pulse, setPulse] = useState<NeighborhoodPulse | null>(null)
 
   const loadGround = useCallback(async (_refresh = false) => {
     setIsLoading(true)
     setError(null)
     try {
-      const [fetchedReps, fetchedMeetings, fetchedEvents] = await Promise.all([
+      const [fetchedReps, fetchedMeetings, fetchedEvents, neighborhoodPulse] = await Promise.all([
         fetchRepsByZip(zip),
         fetchCouncilMeetings(zip),
         fetchCivicEvents(zip),
+        fetchNeighborhoodPulse(zip),
       ])
       setReps([...fetchedReps].sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]))
       setMeetings(fetchedMeetings)
       setEvents(fetchedEvents)
+      setPulse(neighborhoodPulse)
     } catch (err) {
       setError('Could not load civic data. Pull down to retry.')
       console.warn('Ground load error:', err)
@@ -193,6 +199,35 @@ export default function GroundScreen() {
           }
         </View>
 
+        <View style={styles.divider} />
+
+        {/* SECTION 4: NEIGHBORHOOD PULSE */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Neighborhood Pulse</Text>
+          <Text style={styles.sectionSub}>Real city data · Zip {zip}</Text>
+        </View>
+        <View style={styles.sectionContent}>
+          {pulse?.requests311 && <ServiceRequests311Card data={pulse.requests311} />}
+          <View style={styles.crimeUnavailable}>
+            <View style={styles.crimeUnavailableHeader}>
+              <Text style={styles.crimeUnavailableTitle}>Crime data unavailable</Text>
+            </View>
+            <Text style={styles.crimeUnavailableText}>
+              LAPD suspended public crime data updates in early 2025 while transitioning to a new reporting system. No timeline has been given for restoration. The data on DataLA has not been updated since December 2024.
+            </Text>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://laist.com/news/lapd-records-data-refusal')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.crimeUnavailableLink}>Read the full story → LAist</Text>
+            </TouchableOpacity>
+          </View>
+          {pulse?.permits && <PermitActivityCard data={pulse.permits} />}
+          {!pulse && (
+            <Text style={styles.emptyText}>Loading neighborhood data...</Text>
+          )}
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   )
@@ -281,5 +316,36 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     textAlign: 'center',
     paddingVertical: spacing.lg,
+  },
+  crimeUnavailable: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 0.5,
+    borderColor: colors.border,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.border,
+  },
+  crimeUnavailableHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    marginBottom: spacing.sm,
+  },
+  crimeUnavailableTitle: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: colors.text.secondary,
+  },
+  crimeUnavailableText: {
+    fontSize: 13,
+    color: colors.text.secondary,
+    lineHeight: 20,
+    marginBottom: spacing.sm,
+  },
+  crimeUnavailableLink: {
+    fontSize: 13,
+    color: colors.text.accent,
+    fontWeight: '600' as const,
   },
 })
