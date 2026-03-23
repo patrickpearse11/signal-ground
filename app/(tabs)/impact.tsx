@@ -9,6 +9,7 @@ import { ScoreMeter } from '@/components/impact/ScoreMeter'
 import { CommunityRippleCard } from '@/components/impact/CommunityRippleCard'
 import { OutcomeCard } from '@/components/impact/OutcomeCard'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { SectionHeader } from '@/components/shared/SectionHeader'
 import { useImpactStore } from '@/store/impactStore'
 import { useUserStore } from '@/store/userStore'
 import {
@@ -103,10 +104,10 @@ export default function ImpactScreen() {
         </View>
 
         {/* SECTION 1: ACTION OPPORTUNITIES */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Action Opportunities</Text>
-          <Text style={styles.sectionSub}>High-leverage actions you can take right now</Text>
-        </View>
+        <SectionHeader
+          title="Action Opportunities"
+          subtitle="High-leverage actions you can take right now"
+        />
 
         <View style={styles.sectionContent}>
           {activeOpportunities.length > 0
@@ -127,10 +128,10 @@ export default function ImpactScreen() {
         <View style={styles.divider} />
 
         {/* SECTION 2: COMMUNITY RIPPLE */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Community Ripple</Text>
-          <Text style={styles.sectionSub}>Collective civic activity in Tarzana</Text>
-        </View>
+        <SectionHeader
+          title="Community Ripple"
+          subtitle="Collective civic activity in Tarzana"
+        />
 
         <View style={styles.sectionContent}>
           {ripple && <CommunityRippleCard ripple={ripple} />}
@@ -141,10 +142,10 @@ export default function ImpactScreen() {
         {/* SECTION 3: OUTCOMES */}
         {outcomes.length > 0 && (
           <>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Did It Work?</Text>
-              <Text style={styles.sectionSub}>Outcomes from recent civic actions in Tarzana</Text>
-            </View>
+            <SectionHeader
+              title="Did It Work?"
+              subtitle="Outcomes from recent civic actions in Tarzana"
+            />
             <View style={styles.sectionContent}>
               {outcomes.map((outcome, i) => (
                 <OutcomeCard key={outcome.id ?? i} outcome={outcome} userActed={i === 0} />
@@ -155,10 +156,10 @@ export default function ImpactScreen() {
         )}
 
         {/* SECTION 4: PERSONAL SCORE */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Score</Text>
-          <Text style={styles.sectionSub}>Updated after each action</Text>
-        </View>
+        <SectionHeader
+          title="Your Score"
+          subtitle="Updated after each action"
+        />
 
         <View style={styles.sectionContent}>
           {score && <ScoreMeter score={score} />}
@@ -179,13 +180,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 28, fontWeight: '700', color: colors.text.primary },
   headerSub: { fontSize: 13, color: colors.text.secondary, marginTop: 2 },
-  sectionHeader: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  sectionTitle: { fontSize: 20, fontWeight: '700', color: colors.text.primary },
-  sectionSub: { fontSize: 13, color: colors.text.secondary, marginTop: 4 },
   sectionContent: { paddingHorizontal: spacing.md },
   divider: {
     height: 1,

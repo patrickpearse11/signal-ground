@@ -179,16 +179,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   tag: {
-    backgroundColor: colors.background,
-    borderRadius: 99,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    backgroundColor: 'transparent',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     borderWidth: 0.5,
-    borderColor: colors.border,
+    borderColor: '#3A3A3A',
   },
   tagText: {
     fontSize: 11,
-    color: colors.text.secondary,
+    color: '#888888',
+    letterSpacing: 0.2,
   },
   sourcesRow: {
     flexDirection: 'row',

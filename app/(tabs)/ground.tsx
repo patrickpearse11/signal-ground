@@ -4,29 +4,26 @@ import {
   StyleSheet, TouchableOpacity, Linking
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { RepCard } from '@/components/ground/RepCard'
 import { CouncilMeetingCard } from '@/components/ground/CouncilMeetingCard'
 import { EventCard } from '@/components/ground/EventCard'
 import { EventFilterPills } from '@/components/ground/EventFilterPills'
 import { ServiceRequests311Card } from '@/components/ground/ServiceRequests311Card'
 import { PermitActivityCard } from '@/components/ground/PermitActivityCard'
 import { SkeletonCard } from '@/components/shared/SkeletonCard'
+import { SectionHeader } from '@/components/shared/SectionHeader'
 import { useGroundStore } from '@/store/groundStore'
 import { useUserStore } from '@/store/userStore'
-import { useBriefStore } from '@/store/briefStore'
-import { fetchRepsByZip, fetchCouncilMeetings, fetchCivicEvents } from '@/services/civicService'
+import { fetchCouncilMeetings, fetchCivicEvents } from '@/services/civicService'
 import { fetchNeighborhoodPulse, NeighborhoodPulse } from '@/services/socrataService'
 import { colors, spacing, radius } from '@/constants/theme'
 import { CivicEvent } from '@/types/ground'
 
 type EventFilter = 'all' | CivicEvent['event_type']
-const LEVEL_ORDER = { local: 0, state: 1, federal: 2 }
 
 export default function GroundScreen() {
-  const { reps, meetings, events, isLoading, error,
-    setReps, setMeetings, setEvents, setIsLoading, setError } = useGroundStore()
+  const { meetings, events, isLoading, error,
+    setMeetings, setEvents, setIsLoading, setError } = useGroundStore()
   const { zip } = useUserStore()
-  const { brief } = useBriefStore()
   const [eventFilter, setEventFilter] = useState<EventFilter>('all')
   const [pulse, setPulse] = useState<NeighborhoodPulse | null>(null)
 
@@ -34,13 +31,11 @@ export default function GroundScreen() {
     setIsLoading(true)
     setError(null)
     try {
-      const [fetchedReps, fetchedMeetings, fetchedEvents, neighborhoodPulse] = await Promise.all([
-        fetchRepsByZip(zip),
+      const [fetchedMeetings, fetchedEvents, neighborhoodPulse] = await Promise.all([
         fetchCouncilMeetings(zip),
         fetchCivicEvents(zip),
         fetchNeighborhoodPulse(zip),
       ])
-      setReps([...fetchedReps].sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]))
       setMeetings(fetchedMeetings)
       setEvents(fetchedEvents)
       setPulse(neighborhoodPulse)
@@ -58,23 +53,19 @@ export default function GroundScreen() {
     ? events
     : events.filter(e => e.event_type === eventFilter)
 
-  const localReps = reps.filter(r => r.level === 'local')
-  const stateReps = reps.filter(r => r.level === 'state')
-  const federalReps = reps.filter(r => r.level === 'federal')
-
-  if (isLoading && reps.length === 0) {
+  if (isLoading && meetings.length === 0 && events.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Ground</Text>
-          <Text style={styles.headerSub}>Your civic foundation</Text>
+          <Text style={styles.headerSub}>Civic calendar · City data · Zip {zip}</Text>
         </View>
         {[1, 2, 3].map((i) => <SkeletonCard key={i} variant="rep" />)}
       </SafeAreaView>
     )
   }
 
-  if (error && reps.length === 0) {
+  if (error && meetings.length === 0 && events.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -105,59 +96,14 @@ export default function GroundScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Ground</Text>
-          <Text style={styles.headerSub}>Zip {zip} · Tarzana, Los Angeles</Text>
+          <Text style={styles.headerSub}>Civic calendar · City data · Zip {zip}</Text>
         </View>
 
-        {/* SECTION 1: REPRESENTATIVES */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Your Representatives</Text>
-          <Text style={styles.sectionSub}>Sorted by who can act fastest on local issues</Text>
-        </View>
-
-        {localReps.length > 0 && (
-          <View style={styles.repGroup}>
-            <Text style={styles.groupLabel}>LOCAL GOVERNMENT</Text>
-            {localReps.map((rep, i) => (
-              <RepCard
-                key={i}
-                rep={rep}
-                currentAction={brief?.content_json.rep_actions.find(r => r.name === rep.name)?.issue}
-              />
-            ))}
-          </View>
-        )}
-        {stateReps.length > 0 && (
-          <View style={styles.repGroup}>
-            <Text style={styles.groupLabel}>STATE GOVERNMENT</Text>
-            {stateReps.map((rep, i) => (
-              <RepCard
-                key={i}
-                rep={rep}
-                currentAction={brief?.content_json.rep_actions.find(r => r.name === rep.name)?.issue}
-              />
-            ))}
-          </View>
-        )}
-        {federalReps.length > 0 && (
-          <View style={styles.repGroup}>
-            <Text style={styles.groupLabel}>FEDERAL GOVERNMENT</Text>
-            {federalReps.map((rep, i) => (
-              <RepCard
-                key={i}
-                rep={rep}
-                currentAction={brief?.content_json.rep_actions.find(r => r.name === rep.name)?.issue}
-              />
-            ))}
-          </View>
-        )}
-
-        <View style={styles.divider} />
-
-        {/* SECTION 2: NEIGHBORHOOD COUNCIL */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Neighborhood Council</Text>
-          <Text style={styles.sectionSub}>Tarzana NC · Upcoming meetings</Text>
-        </View>
+        {/* SECTION 1: NEIGHBORHOOD COUNCIL */}
+        <SectionHeader
+          title="Neighborhood Council"
+          subtitle="Tarzana NC · Upcoming meetings"
+        />
 
         <View style={styles.councilHow}>
           <Text style={styles.councilHowTitle}>How to participate</Text>
@@ -176,11 +122,11 @@ export default function GroundScreen() {
 
         <View style={styles.divider} />
 
-        {/* SECTION 3: COMMUNITY EVENTS */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Community Events</Text>
-          <Text style={styles.sectionSub}>Upcoming civic opportunities in Tarzana/LA</Text>
-        </View>
+        {/* SECTION 2: COMMUNITY EVENTS */}
+        <SectionHeader
+          title="Community Events"
+          subtitle="Upcoming civic opportunities in Tarzana/LA"
+        />
 
         <EventFilterPills value={eventFilter} onChange={setEventFilter} />
 
@@ -201,11 +147,12 @@ export default function GroundScreen() {
 
         <View style={styles.divider} />
 
-        {/* SECTION 4: NEIGHBORHOOD PULSE */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Neighborhood Pulse</Text>
-          <Text style={styles.sectionSub}>Real city data · Zip {zip}</Text>
-        </View>
+        {/* SECTION 3: NEIGHBORHOOD PULSE */}
+        <SectionHeader
+          title="Neighborhood Pulse"
+          subtitle={`Real city data · Zip ${zip}`}
+        />
+
         <View style={styles.sectionContent}>
           {pulse?.requests311 && <ServiceRequests311Card data={pulse.requests311} />}
           <View style={styles.crimeUnavailable}>
@@ -243,22 +190,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 28, fontWeight: '700', color: colors.text.primary },
   headerSub: { fontSize: 13, color: colors.text.secondary, marginTop: 2 },
-  sectionHeader: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  sectionTitle: { fontSize: 20, fontWeight: '700', color: colors.text.primary },
-  sectionSub: { fontSize: 13, color: colors.text.secondary, marginTop: 4 },
   sectionContent: { paddingHorizontal: spacing.md },
-  repGroup: { paddingHorizontal: spacing.md, marginBottom: spacing.md },
-  groupLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.text.secondary,
-    letterSpacing: 1,
-    marginBottom: spacing.sm,
-  },
   divider: {
     height: 1,
     backgroundColor: colors.border,
@@ -328,13 +260,13 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.border,
   },
   crimeUnavailableHeader: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: spacing.sm,
   },
   crimeUnavailableTitle: {
     fontSize: 14,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     color: colors.text.secondary,
   },
   crimeUnavailableText: {
@@ -346,6 +278,6 @@ const styles = StyleSheet.create({
   crimeUnavailableLink: {
     fontSize: 13,
     color: colors.text.accent,
-    fontWeight: '600' as const,
+    fontWeight: '600',
   },
 })

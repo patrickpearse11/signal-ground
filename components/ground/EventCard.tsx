@@ -128,15 +128,14 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   rsvpBtn: {
-    borderWidth: 1,
-    borderColor: colors.text.accent,
+    backgroundColor: colors.text.accent,
     borderRadius: radius.md,
-    paddingVertical: 8,
+    paddingVertical: 10,
     alignItems: 'center',
   },
   rsvpBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: colors.text.accent,
+    color: '#000000',
   },
 })

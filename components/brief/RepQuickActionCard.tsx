@@ -1,53 +1,44 @@
-import { View, Text, TouchableOpacity, Linking, StyleSheet } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { useRouter } from 'expo-router'
 import { RepAction } from '@/types/brief'
 import { colors, spacing, radius } from '@/constants/theme'
-import { lightTap, mediumTap } from '@/utils/haptics'
 
 interface Props {
   reps: RepAction[]
 }
 
 export function RepQuickActionCard({ reps }: Props) {
-  function handleCall(phone: string) {
-    mediumTap()
-    Linking.openURL(`tel:${phone.replace(/\D/g, '')}`)
-  }
-
-  function handleEmail(email: string) {
-    lightTap()
-    const subject = encodeURIComponent('Constituent inquiry — Tarzana resident')
-    Linking.openURL(`mailto:${email}?subject=${subject}`)
-  }
+  const router = useRouter()
+  const topRep = reps[0]
+  if (!topRep) return null
 
   return (
     <View style={styles.card}>
       <View style={styles.labelRow}>
         <View style={styles.labelDot} />
-        <Text style={styles.label}>YOUR REPS · QUICK ACTIONS</Text>
+        <Text style={styles.label}>YOUR REPS</Text>
       </View>
-      <Text style={styles.title}>Contact your representatives today</Text>
-      {reps.map((rep, i) => (
-        <View key={i} style={styles.repRow}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {rep.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
-            </Text>
-          </View>
-          <View style={styles.repInfo}>
-            <Text style={styles.repName}>{rep.name}</Text>
-            <Text style={styles.repRole}>{rep.role}</Text>
-            <Text style={styles.repIssue} numberOfLines={1}>{rep.issue}</Text>
-          </View>
-          <View style={styles.repActions}>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => handleCall(rep.phone)} activeOpacity={0.7}>
-              <Text style={styles.actionBtnText}>Call</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionBtn, styles.actionBtnSecondary]} onPress={() => handleEmail(rep.email)} activeOpacity={0.7}>
-              <Text style={[styles.actionBtnText, styles.actionBtnTextSecondary]}>Email</Text>
-            </TouchableOpacity>
-          </View>
+
+      <View style={styles.repRow}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {topRep.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
+          </Text>
         </View>
-      ))}
+        <View style={styles.repInfo}>
+          <Text style={styles.repName}>{topRep.name}</Text>
+          <Text style={styles.repRole}>{topRep.role}</Text>
+          <Text style={styles.repIssue} numberOfLines={2}>{topRep.issue}</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.goToRepsBtn}
+        onPress={() => router.push('/(tabs)/reps')}
+        activeOpacity={0.85}
+      >
+        <Text style={styles.goToRepsBtnText}>View all your reps →</Text>
+      </TouchableOpacity>
     </View>
   )
 }
@@ -68,36 +59,18 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: spacing.sm,
   },
-  labelDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.text.secondary,
-  },
-  label: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.text.secondary,
-    letterSpacing: 1,
-  },
-  title: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: colors.text.primary,
-    marginBottom: spacing.md,
-  },
+  labelDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.text.secondary },
+  label: { fontSize: 10, fontWeight: '700', color: colors.text.secondary, letterSpacing: 1 },
   repRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
-    paddingVertical: spacing.sm,
-    borderTopWidth: 0.5,
-    borderTopColor: colors.border,
+    marginBottom: spacing.md,
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: colors.background,
     borderWidth: 0.5,
     borderColor: colors.border,
@@ -105,23 +78,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  avatarText: { fontSize: 13, fontWeight: '700', color: colors.text.accent },
+  avatarText: { fontSize: 14, fontWeight: '700', color: colors.text.accent },
   repInfo: { flex: 1 },
-  repName: { fontSize: 14, fontWeight: '700', color: colors.text.primary },
+  repName: { fontSize: 15, fontWeight: '700', color: colors.text.primary },
   repRole: { fontSize: 12, color: colors.text.secondary, marginTop: 1 },
-  repIssue: { fontSize: 11, color: colors.text.secondary, marginTop: 2, fontStyle: 'italic' },
-  repActions: { flexDirection: 'row', gap: 6 },
-  actionBtn: {
+  repIssue: { fontSize: 12, color: colors.text.secondary, marginTop: 2, fontStyle: 'italic', lineHeight: 17 },
+  goToRepsBtn: {
     backgroundColor: colors.text.accent,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    borderRadius: radius.md,
+    paddingVertical: 10,
+    alignItems: 'center',
   },
-  actionBtnSecondary: {
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.text.accent,
-  },
-  actionBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
-  actionBtnTextSecondary: { color: colors.text.accent },
+  goToRepsBtnText: { fontSize: 14, fontWeight: '700', color: '#000000' },
 })

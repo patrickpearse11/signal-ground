@@ -12,10 +12,10 @@ interface Props {
 }
 
 const ACTION_CONFIG = {
-  event:    { label: 'Attend',    color: '#2DD4A8', bg: 'rgba(45,212,168,0.15)'  },
-  call:     { label: 'Call Rep',  color: '#E8A838', bg: 'rgba(232,168,56,0.15)'  },
-  email:    { label: 'Email Rep', color: '#7B8CDE', bg: 'rgba(123,140,222,0.15)' },
-  petition: { label: 'Sign',      color: '#E8A838', bg: 'rgba(232,168,56,0.15)'  },
+  event:    { label: 'Attend',    color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+  call:     { label: 'Call Rep',  color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+  email:    { label: 'Email Rep', color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
+  petition: { label: 'Sign',      color: '#F59E0B', bg: 'rgba(245,158,11,0.15)' },
 }
 
 export function ActionCard({ opportunity, onRSVP }: Props) {
@@ -62,7 +62,7 @@ export function ActionCard({ opportunity, onRSVP }: Props) {
       </Text>
 
       <TouchableOpacity
-        style={[styles.actionBtn, { backgroundColor: config.color }]}
+        style={styles.actionBtn}
         onPress={handleAction}
         activeOpacity={0.8}
       >
@@ -109,12 +109,13 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     borderRadius: radius.md,
-    paddingVertical: 10,
+    paddingVertical: 12,
     alignItems: 'center',
+    backgroundColor: '#F59E0B',
   },
   actionBtnText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#000000',
   },
 })
