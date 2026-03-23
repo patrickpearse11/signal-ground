@@ -20,7 +20,7 @@ export function PersonalizedCloseCard({ data }: Props) {
       <Text style={styles.action}>{data.action}</Text>
       {data.deadline ? (
         <View style={styles.deadlineRow}>
-          <Text style={styles.deadlineIcon}>⏱</Text>
+          <Text style={styles.deadlineIcon}>→</Text>
           <Text style={styles.deadlineText}>{data.deadline}</Text>
         </View>
       ) : null}

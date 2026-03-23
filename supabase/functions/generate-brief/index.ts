@@ -92,7 +92,7 @@ async function callGrok(prompt: string, zip: string): Promise<any> {
       body: JSON.stringify({
         model: 'grok-3',
         temperature: 0.3,
-        max_tokens: 1500,
+        max_tokens: 2000,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt },
@@ -125,8 +125,8 @@ async function callClaudeFallback(userPrompt: string, systemPrompt: string): Pro
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1500,
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     }),

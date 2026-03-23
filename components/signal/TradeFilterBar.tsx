@@ -9,11 +9,11 @@ interface Props {
   tradeCount?: number
 }
 
-const FILTERS: { value: FeedFilter; label: string; emoji: string }[] = [
-  { value: 'all',       label: 'All Signals',     emoji: '📡' },
-  { value: 'trade',     label: 'Trade & Economy',  emoji: '📊' },
-  { value: 'conflicts', label: 'Conflicts',         emoji: '⚡' },
-  { value: 'energy',    label: 'Energy & Fuel',     emoji: '⛽' },
+const FILTERS: { value: FeedFilter; label: string }[] = [
+  { value: 'all',       label: 'All Signals'    },
+  { value: 'trade',     label: 'Trade & Economy' },
+  { value: 'conflicts', label: 'Conflicts'       },
+  { value: 'energy',    label: 'Energy & Fuel'   },
 ]
 
 export function TradeFilterBar({ value, onChange, tradeCount }: Props) {
@@ -30,7 +30,6 @@ export function TradeFilterBar({ value, onChange, tradeCount }: Props) {
           onPress={() => onChange(f.value)}
           activeOpacity={0.7}
         >
-          <Text style={styles.pillEmoji}>{f.emoji}</Text>
           <Text style={[styles.pillLabel, value === f.value && styles.pillLabelActive]}>
             {f.label}
           </Text>
@@ -69,7 +68,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.text.accent,
     borderColor: colors.text.accent,
   },
-  pillEmoji: { fontSize: 13 },
   pillLabel: {
     fontSize: 13,
     color: colors.text.secondary,
